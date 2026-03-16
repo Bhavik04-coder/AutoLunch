@@ -1,0 +1,27 @@
+.page { flex: 1; background: var(--new-bgColorInner); overflow-y: auto; }
+.content { padding: 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card {
+  background: var(--new-bgColor); border: 1px solid var(--new-table-border); border-radius: 12px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px; transition: all 0.2s;
+  &:hover { border-color: var(--new-sep); transform: translateY(-2px); box-shadow: var(--menu-shadow); }
+}
+.cardHeader { display: flex; align-items: center; justify-content: space-between; }
+.icon { font-size: 28px; }
+.badge {
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  background: rgba(156,156,156,0.15); color: #9c9c9c;
+  &.connected { background: rgba(50,213,131,0.15); color: #32d583; }
+}
+.name { font-size: 16px; font-weight: 600; color: rgb(var(--new-textColor)); }
+.desc { font-size: 13px; color: var(--new-textItemBlur); line-height: 1.5; flex: 1; }
+.connectBtn {
+  padding: 8px 16px; background: var(--new-btn-primary); color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  &:hover { background: #7236f1; }
+}
+.disconnectBtn {
+  padding: 8px 16px; background: transparent; color: #f97066; border: 1px solid rgba(249,112,102,0.3);
+  border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  &:hover { background: rgba(249,112,102,0.1); }
+}

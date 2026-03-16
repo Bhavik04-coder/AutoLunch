@@ -1,0 +1,36 @@
+.page { flex: 1; background: var(--new-bgColorInner); overflow-y: auto; }
+.content { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+.intro { }
+.introTitle { font-size: 18px; font-weight: 600; color: rgb(var(--new-textColor)); margin-bottom: 8px; }
+.introText { font-size: 14px; color: var(--new-textItemBlur); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.card {
+  display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+  background: var(--new-bgColor); border: 1px solid var(--new-table-border); border-radius: 12px; transition: all 0.2s;
+  &:hover { border-color: var(--new-sep); }
+}
+.platformColor { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.cardBody { flex: 1; }
+.platformName { font-size: 14px; font-weight: 600; color: rgb(var(--new-textColor)); }
+.username { font-size: 12px; color: var(--new-textItemBlur); margin-top: 2px; }
+.connectBtn {
+  padding: 7px 16px; background: var(--new-btn-primary); color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  &:hover { background: #7236f1; }
+}
+.disconnectBtn {
+  padding: 7px 16px; background: transparent; color: #f97066; border: 1px solid rgba(249,112,102,0.3);
+  border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  &:hover { background: rgba(249,112,102,0.1); }
+}
+
+
+// Platform dot colors via data-platform attribute
+.platformColor[data-platform='twitter']   { background: #000; }
+.platformColor[data-platform='linkedin']  { background: #0077b5; }
+.platformColor[data-platform='instagram'] { background: #e4405f; }
+.platformColor[data-platform='facebook']  { background: #1877f2; }
+.platformColor[data-platform='youtube']   { background: #ff0000; }
+.platformColor[data-platform='reddit']    { background: #ff4500; }
+.platformColor[data-platform='discord']   { background: #5865f2; }
+.platformColor[data-platform='telegram']  { background: #0088cc; }

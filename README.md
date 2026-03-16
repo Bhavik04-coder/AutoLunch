@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AutoLaunch - Social Media Management Platform
 
-## Getting Started
+A modern, animated social media management platform built with Next.js 14+, TypeScript, and SCSS.
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:4200](http://localhost:4200)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔑 Login
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Use ANY email and password to login - no authentication required!
 
-## Learn More
+Example: `test@example.com` / `123`
 
-To learn more about Next.js, take a look at the following resources:
+## ✨ Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 🎨 **Beautiful UI** - Colorful animations and modern design
+- 🚀 **Post Scheduling** - Calendar and list views
+- 📊 **Analytics** - Performance tracking
+- 🖼️ **Media Library** - File management
+- 🤖 **AI Agents** - Content generation
+- 🔌 **Plugins** - Extensible architecture
+- 🔗 **Integrations** - Multi-platform support
+- ⚙️ **Settings** - User preferences
+- 💳 **Billing** - Subscription management
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎨 Design Features
 
-## Deploy on Vercel
+- Fixed navbar with glassmorphism effect
+- Animated gradient hero section
+- Floating colorful blobs
+- Smooth fade-in animations
+- Hover effects on all cards
+- Fully responsive design
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 14+ with App Router
+- TypeScript
+- SCSS Modules + Tailwind CSS
+- React Context API
+- Plus Jakarta Sans font
+
+## 📝 Scripts
+
+```bash
+npm run dev      # Development (port 4200)
+npm run build    # Production build
+npm start        # Production server
+npm run lint     # ESLint
+```
+
+## 📁 Structure
+
+```
+src/
+├── app/              # Pages
+├── components/       # React components
+├── contexts/         # State management
+├── lib/             # Mock data
+└── proxy.ts         # Route protection
+```
+
+## 🎭 Mock Mode
+
+No backend needed! The app uses mock authentication:
+- Any email/password works
+- Auto-creates users
+- Sample data included
+- Perfect for demos
+
+## 📄 License
+
+Proprietary

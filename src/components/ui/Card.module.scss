@@ -1,0 +1,17 @@
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+
+  &.hover:hover {
+    background: var(--box-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--menu-shadow);
+  }
+
+  &.clickable {
+    cursor: pointer;
+  }
+}
