@@ -28,7 +28,10 @@ const nextConfig: NextConfig = {
     FRONTEND_URL: process.env.FRONTEND_URL,
   },
 
-  // Webpack configuration
+  // Turbopack configuration (Next.js 16 default)
+  turbopack: {},
+
+  // Webpack configuration (fallback for non-turbopack builds)
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     return config;
