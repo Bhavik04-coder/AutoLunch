@@ -1,0 +1,92 @@
+.card {
+  background: var(--new-bgColor);
+  border: 1px solid var(--new-table-border);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.2s;
+  &:hover { border-color: var(--new-sep); }
+}
+
+.connected {
+  border-color: rgba(50, 213, 131, 0.35);
+  background: rgba(50, 213, 131, 0.02);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.info { flex: 1; min-width: 0; }
+.name { font-size: 14px; font-weight: 600; color: rgb(var(--new-textColor)); }
+.desc { font-size: 12px; color: var(--new-textItemBlur); margin-top: 2px; }
+
+.badge {
+  padding: 4px 10px;
+  background: rgba(50, 213, 131, 0.12);
+  color: #32d583;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  padding: 3px 10px;
+  background: var(--new-bgColorInner);
+  border: 1px solid var(--new-bgLineColor);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--new-textItemBlur);
+}
+
+.actions { display: flex; }
+
+.connectBtn {
+  width: 100%;
+  padding: 9px 16px;
+  background: color-mix(in srgb, var(--color, #6366f1) 12%, transparent);
+  color: var(--color, #6366f1);
+  border: 1px solid color-mix(in srgb, var(--color, #6366f1) 35%, transparent);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s;
+  &:hover { background: color-mix(in srgb, var(--color, #6366f1) 22%, transparent); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.disconnectBtn {
+  width: 100%;
+  padding: 9px 16px;
+  background: transparent;
+  color: #f97066;
+  border: 1px solid rgba(249, 112, 102, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s;
+  &:hover { background: rgba(249, 112, 102, 0.08); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}

@@ -1,11 +1,13 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Twitter from 'next-auth/providers/twitter';
+import LinkedIn from 'next-auth/providers/linkedin';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
   providers: [
-    // ── Google (covers YouTube via same OAuth scope) ──────────────────────
+    // ── Google ────────────────────────────────────────────────────────────
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
@@ -16,34 +18,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
 
-    // ── X / Twitter (OAuth 2.0) ───────────────────────────────────────────
+    // ── X / Twitter ───────────────────────────────────────────────────────
     Twitter({
       clientId: process.env.AUTH_TWITTER_ID!,
       clientSecret: process.env.AUTH_TWITTER_SECRET!,
     }),
 
-    // ── LinkedIn ──────────────────────────────────────────────────────────
-    {
-      id: 'linkedin',
-      name: 'LinkedIn',
-      type: 'oauth',
-      authorization: {
-        url: 'https://www.linkedin.com/oauth/v2/authorization',
-        params: { scope: 'openid profile email w_member_social', response_type: 'code' },
-      },
-      token: {
-        url: 'https://www.linkedin.com/oauth/v2/accessToken',
-        params: { grant_type: 'authorization_code' },
-      },
-      userinfo: 'https://api.linkedin.com/v2/userinfo',
+    // ── LinkedIn (built-in provider — most reliable with NextAuth v5) ─────
+    // Portal: https://www.linkedin.com/developers/apps → Auth tab
+    // Redirect URI: http://localhost:4200/api/auth/callback/linkedin
+    // Required products: "Sign In with LinkedIn using OpenID Connect"
+    // NOTE: w_member_social is a posting scope — NOT part of OIDC auth flow.
+    //       LinkedIn's OIDC only supports: openid, profile, email
+    LinkedIn({
       clientId: process.env.AUTH_LINKEDIN_ID!,
       clientSecret: process.env.AUTH_LINKEDIN_SECRET!,
-      profile(profile: any) {
-        return { id: profile.sub, name: profile.name, email: profile.email ?? null, image: profile.picture ?? null };
+      authorization: {
+        params: {
+          scope: 'openid profile email',
+        },
       },
-    },
+    }),
 
-    // ── Facebook (covers Instagram Business via same app) ─────────────────
+    // ── Facebook ──────────────────────────────────────────────────────────
     {
       id: 'facebook',
       name: 'Facebook',
@@ -64,7 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     },
 
-    // ── Instagram (same Facebook app, separate provider entry for UX) ─────
+    // ── Instagram ─────────────────────────────────────────────────────────
     {
       id: 'instagram',
       name: 'Instagram',
@@ -85,7 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     },
 
-    // ── YouTube (separate entry — same Google app, different scope label) ─
+    // ── YouTube ───────────────────────────────────────────────────────────
     {
       id: 'youtube',
       name: 'YouTube',
@@ -117,7 +114,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async jwt({ token, account }) {
       if (account) {
-        // Accumulate all connected platforms — never overwrite previous ones
         const connected = (token.connected as Record<string, { accessToken: string; connectedAt: number }>) ?? {};
         connected[account.provider] = {
           accessToken: account.access_token as string,

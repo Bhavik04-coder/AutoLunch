@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import styles from './AppShell.module.scss';
 import { PostizLogo } from './PostizLogo';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 import { useUser } from '@/contexts/UserContext';
 import { useSession, signOut } from 'next-auth/react';
 
@@ -152,6 +153,7 @@ export default function AppShell({ children, title }: { children: ReactNode; tit
           <div className={styles.topbarTitle}>{title || 'AutoLaunch'}</div>
           <div className={styles.topbarActions}>
             <div className={styles.separator} />
+            <NotificationBell />
             <ThemeToggle />
             <div className={styles.separator} />
 

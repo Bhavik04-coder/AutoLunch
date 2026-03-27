@@ -1,0 +1,85 @@
+.wrap    { display: flex; flex-direction: column; gap: 20px; }
+.compose { display: flex; flex-direction: column; gap: 18px; }
+.preview { min-height: 200px; }
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--new-bgLineColor);
+  margin: -4px 0 0;
+}
+.tab {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--new-textItemBlur);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  &:hover { color: rgb(var(--new-textColor)); }
+}
+.tabActive {
+  color: var(--new-btn-primary);
+  border-bottom-color: var(--new-btn-primary);
+  font-weight: 600;
+}
+
+.field { display: flex; flex-direction: column; gap: 7px; }
+.label { font-size: 13px; font-weight: 600; color: rgb(var(--new-textColor)); }
+.textarea {
+  padding: 10px 13px;
+  background: var(--new-bgColor);
+  border: 1px solid var(--new-table-border);
+  border-radius: 8px;
+  color: rgb(var(--new-textColor));
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s;
+  &:focus { outline: none; border-color: var(--new-btn-primary); }
+}
+
+.error {
+  padding: 10px 14px;
+  background: rgba(249, 112, 102, 0.08);
+  border: 1px solid rgba(249, 112, 102, 0.25);
+  border-radius: 8px;
+  color: #f97066;
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+.cancelBtn {
+  padding: 9px 20px;
+  background: transparent;
+  color: var(--new-textItemBlur);
+  border: 1px solid var(--new-table-border);
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  &:hover { background: var(--new-box-hover); }
+}
+.submitBtn {
+  padding: 9px 22px;
+  background: var(--new-btn-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+  &:hover { background: #7236f1; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}

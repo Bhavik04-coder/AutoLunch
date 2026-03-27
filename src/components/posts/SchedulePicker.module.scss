@@ -1,0 +1,22 @@
+.wrap  { display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 13px; font-weight: 600; color: rgb(var(--new-textColor)); }
+.row   { display: flex; gap: 12px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 130px; }
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--new-textItemBlur);
+}
+
+.input, .select {
+  padding: 8px 12px;
+  background: var(--new-bgColor);
+  border: 1px solid var(--new-table-border);
+  border-radius: 8px;
+  color: rgb(var(--new-textColor));
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  &:focus { outline: none; border-color: var(--new-btn-primary); }
+}

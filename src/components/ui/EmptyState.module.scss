@@ -1,0 +1,14 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.icon  { font-size: 40px; }
+.title { font-size: 16px; font-weight: 600; color: rgb(var(--new-textColor)); margin: 0; }
+.desc  { font-size: 13px; color: var(--new-textItemBlur); margin: 0; max-width: 320px; line-height: 1.5; }
+.action { margin-top: 8px; }

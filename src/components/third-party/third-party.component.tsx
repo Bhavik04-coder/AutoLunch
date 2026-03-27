@@ -24,6 +24,16 @@ const INTEGRATIONS = [
   { id: 'make',     name: 'Make (Integromat)', desc: 'Build advanced automation scenarios',            color: '#6d00cc', icon: '🔄' },
 ];
 
+// Platforms available for OAuth auth in the Integrations tab
+const AUTH_PLATFORMS = [
+  { id: 'twitter',   name: 'X (Twitter)', desc: 'Post tweets and threads',              color: '#000000', provider: 'twitter'   },
+  { id: 'linkedin',  name: 'LinkedIn',    desc: 'Publish to your profile or page',      color: '#0077b5', provider: 'linkedin'  },
+  { id: 'instagram', name: 'Instagram',   desc: 'Post to Business or Creator accounts', color: '#e4405f', provider: 'instagram' },
+  { id: 'facebook',  name: 'Facebook',    desc: 'Publish to your Facebook Page',        color: '#1877f2', provider: 'facebook'  },
+  { id: 'youtube',   name: 'YouTube',     desc: 'Upload videos to your channel',        color: '#ff0000', provider: 'youtube'   },
+  { id: 'google',    name: 'Google',      desc: 'Connect Google account for Analytics', color: '#e37400', provider: 'google'    },
+];
+
 const TEMPLATE_CATEGORIES = ['All', 'Promotional', 'Educational', 'Engagement', 'Announcements'];
 const TEMPLATES = [
   { id: 't1', name: 'Product Launch',     category: 'Promotional',   platforms: ['instagram','twitter'],  preview: '🚀 Exciting news! Our new [product] is here...' },
@@ -552,6 +562,7 @@ function BrandDetailsTab() {
 
 /* ── Integrations ─────────────────────────────────────────────────────────── */
 function IntegrationsTab() {
+  const { data: session } = useSession();
   const [enabled,  setEnabled]  = useState<Record<string, boolean>>({ slack: true });
   const [loading,  setLoading]  = useState<string | null>(null);
   const [toast,    setToast]    = useState('');
@@ -560,6 +571,45 @@ function IntegrationsTab() {
   const [whEvents, setWhEvents] = useState<Record<string, boolean>>({
     'Post published': true, 'Post failed': true, 'New follower milestone': false, 'Analytics report ready': false,
   });
+
+  // Persist connected platforms in localStorage (shared with SocialPlatformsTab)
+  const [localConnected, setLocalConnected] = useState<Record<string, { name: string; connectedAt: number }>>(() => {
+    if (typeof window === 'undefined') return {};
+    try { return JSON.parse(localStorage.getItem('al_connected_platforms') ?? '{}'); } catch { return {}; }
+  });
+
+  // Merge newly completed OAuth into local state
+  useEffect(() => {
+    const provider = (session as any)?.provider as string | undefined;
+    const sessionConnected: Record<string, { accessToken: string; connectedAt: number }> = (session as any)?.connected ?? {};
+    if (!provider || !sessionConnected[provider]) return;
+    setLocalConnected((prev) => {
+      const next = {
+        ...prev,
+        [provider]: { name: session?.user?.name ?? provider, connectedAt: sessionConnected[provider].connectedAt },
+      };
+      localStorage.setItem('al_connected_platforms', JSON.stringify(next));
+      return next;
+    });
+  }, [session]);
+
+  const handleConnect = async (provider: string) => {
+    setLoading(provider);
+    await signIn(provider, { callbackUrl: '/third-party' });
+  };
+
+  const handleDisconnect = (id: string, provider: string, name: string) => {
+    setLoading(provider);
+    setLocalConnected((prev) => {
+      const next = { ...prev };
+      delete next[provider];
+      localStorage.setItem('al_connected_platforms', JSON.stringify(next));
+      return next;
+    });
+    setToast(`${name} disconnected`);
+    setTimeout(() => setToast(''), 3000);
+    setLoading(null);
+  };
 
   const toggle = async (id: string, name: string) => {
     setLoading(id);
@@ -580,6 +630,51 @@ function IntegrationsTab() {
   return (
     <div className={styles.tabContent}>
       {toast && <Toast msg={toast} />}
+
+      {/* ── Platform Auth ──────────────────────────────────────────────── */}
+      <div className={styles.tabSection}>
+        <h3 className={styles.sectionTitle}>Connected Accounts</h3>
+        <p className={styles.sectionDesc}>Authorize platforms to allow AutoLaunch to publish posts on your behalf.</p>
+        <div className={styles.authPlatformGrid}>
+          {AUTH_PLATFORMS.map((p) => {
+            const conn = localConnected[p.provider];
+            const isConnected = !!conn;
+            const isLoading = loading === p.provider;
+            return (
+              <div key={p.id} className={`${styles.authPlatformCard} ${isConnected ? styles.authPlatformCardConnected : ''}`}>
+                <div className={styles.authPlatformTop}>
+                  <PlatformIcon id={p.id} color={p.color} />
+                  <div className={styles.authPlatformInfo}>
+                    <div className={styles.authPlatformName}>{p.name}</div>
+                    <div className={styles.authPlatformDesc}>
+                      {isConnected ? `Connected as ${conn.name}` : p.desc}
+                    </div>
+                  </div>
+                  {isConnected && <span className={styles.connectedBadge}>✓</span>}
+                </div>
+                <div className={styles.authPlatformActions}>
+                  {isConnected ? (
+                    <button type="button" className={styles.disconnectBtn}
+                      onClick={() => handleDisconnect(p.id, p.provider, p.name)}
+                      disabled={isLoading}>
+                      {isLoading ? <span className={styles.spinner} /> : 'Disconnect'}
+                    </button>
+                  ) : (
+                    <button type="button" className={styles.authConnectBtn}
+                      style={{ '--platform-color': p.color } as React.CSSProperties}
+                      onClick={() => handleConnect(p.provider)}
+                      disabled={isLoading}>
+                      {isLoading ? <><span className={styles.spinner} /> Connecting...</> : `Connect ${p.name}`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Third-Party Tools ──────────────────────────────────────────── */}
       <div className={styles.tabSection}>
         <h3 className={styles.sectionTitle}>Third-Party Integrations</h3>
         <p className={styles.sectionDesc}>Connect AutoLaunch with your favourite tools to automate your workflow.</p>
@@ -593,7 +688,7 @@ function IntegrationsTab() {
                 <div className={styles.integrationName}>{intg.name}</div>
                 <div className={styles.integrationDesc}>{intg.desc}</div>
               </div>
-              <button type="button" aria-label={`${enabled[intg.id] ? 'Disable' : 'Enable'} ${intg.name}`}
+              <button type="button"
                 aria-label={`Toggle ${intg.name}`}
                 className={`${styles.toggle} ${enabled[intg.id] ? styles.toggleOn : ''}`}
                 onClick={() => toggle(intg.id, intg.name)} disabled={loading === intg.id}>

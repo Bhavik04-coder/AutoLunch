@@ -1,0 +1,19 @@
+.wrap   { display: flex; flex-direction: column; gap: 20px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.title  { font-size: 17px; font-weight: 700; color: rgb(var(--new-textColor)); margin: 0; }
+.desc   { font-size: 13px; color: var(--new-textItemBlur); margin: 4px 0 0; }
+.count  {
+  padding: 4px 12px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--new-btn-primary);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}

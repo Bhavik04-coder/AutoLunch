@@ -6,6 +6,24 @@ const GEMINI_MODEL = 'gemini-2.0-flash';
 const OLLAMA_BASE  = 'http://localhost:11434';
 const OLLAMA_MODEL = 'llama3.2';
 
+// ── Key rotation ─────────────────────────────────────────────────────────────
+// Tracks which key index to use next (round-robin across the process lifetime)
+let keyIndex = 0;
+
+function getGeminiKeys(): string[] {
+  return [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+  ].filter(Boolean) as string[];
+}
+
+function nextKey(keys: string[]): string {
+  const key = keys[keyIndex % keys.length];
+  keyIndex = (keyIndex + 1) % keys.length;
+  return key;
+}
+
 const SEO_KEYWORDS = {
   linkedin:  ['developer community', 'software development', 'tech innovation', 'digital transformation', 'product launch'],
   twitter:   ['#DevCommunity', '#TechNews', '#BuildInPublic', '#ProductLaunch', '#SaaS'],
@@ -27,30 +45,42 @@ function parseJSON(raw: string): Record<string, unknown> {
 
 // ── Gemini ───────────────────────────────────────────────────────────────────
 async function geminiGenerate(prompt: string): Promise<Record<string, unknown>> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+  const keys = getGeminiKeys();
+  if (!keys.length) throw new Error('No GEMINI_API_KEY configured');
 
-  const res = await fetch(`${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-        responseMimeType: 'application/json',
-      },
-    }),
-  });
+  // Try each key once — on 429/quota error move to the next
+  for (let attempt = 0; attempt < keys.length; attempt++) {
+    const apiKey = nextKey(keys);
+    const res = await fetch(`${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Gemini ${res.status}: ${text.slice(0, 300)}`);
+    // On quota exhaustion, try next key
+    if (res.status === 429 || res.status === 503) {
+      if (attempt < keys.length - 1) continue;
+      throw new Error('All Gemini API keys exhausted. Add more keys or wait a minute.');
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Gemini ${res.status}: ${text.slice(0, 300)}`);
+    }
+
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+    return parseJSON(raw);
   }
 
-  const data = await res.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
-  return parseJSON(raw);
+  throw new Error('Gemini generation failed');
 }
 
 // ── Ollama / Llama 3.2 ───────────────────────────────────────────────────────
@@ -103,11 +133,10 @@ export async function POST(req: NextRequest) {
       twitter   = await ollamaGenerate(prompts.twitter);
       instagram = await ollamaGenerate(prompts.instagram);
     } else {
-      [linkedin, twitter, instagram] = await Promise.all([
-        geminiGenerate(prompts.linkedin),
-        geminiGenerate(prompts.twitter),
-        geminiGenerate(prompts.instagram),
-      ]);
+      // Sequential to avoid hitting per-minute rate limits
+      linkedin  = await geminiGenerate(prompts.linkedin);
+      twitter   = await geminiGenerate(prompts.twitter);
+      instagram = await geminiGenerate(prompts.instagram);
     }
 
     return NextResponse.json({

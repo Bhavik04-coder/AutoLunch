@@ -1,0 +1,27 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.icon    { font-size: 36px; }
+.title   { font-size: 16px; font-weight: 600; color: rgb(var(--new-textColor)); margin: 0; }
+.message { font-size: 13px; color: var(--new-textItemBlur); margin: 0; max-width: 340px; line-height: 1.5; }
+
+.retry {
+  margin-top: 6px;
+  padding: 8px 20px;
+  background: transparent;
+  color: var(--new-btn-primary);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover { background: rgba(99, 102, 241, 0.08); }
+}

@@ -110,6 +110,36 @@
 .integrationGrid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;
 }
+
+/* ── Auth Platform Cards (Connected Accounts) ───────────────────────────── */
+.authPlatformGrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+}
+.authPlatformCard {
+  background: var(--new-bgColor); border: 1px solid var(--new-table-border);
+  border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;
+  transition: border-color .2s;
+  &:hover { border-color: var(--new-sep); }
+}
+.authPlatformCardConnected {
+  border-color: rgba(50,213,131,.3); background: rgba(50,213,131,.02);
+}
+.authPlatformTop {
+  display: flex; align-items: center; gap: 12px;
+}
+.authPlatformInfo { flex: 1; min-width: 0; }
+.authPlatformName { font-size: 14px; font-weight: 600; color: rgb(var(--new-textColor)); }
+.authPlatformDesc { font-size: 12px; color: var(--new-textItemBlur); margin-top: 2px; }
+.authPlatformActions { display: flex; }
+.authConnectBtn {
+  width: 100%; padding: 8px 16px; background: color-mix(in srgb, var(--platform-color, #6366f1) 12%, transparent);
+  color: var(--platform-color, #6366f1); border: 1px solid color-mix(in srgb, var(--platform-color, #6366f1) 35%, transparent);
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background .2s;
+  &:hover { background: color-mix(in srgb, var(--platform-color, #6366f1) 20%, transparent); }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
 .integrationCard {
   display: flex; align-items: center; gap: 14px; padding: 16px 18px;
   background: var(--new-bgColor); border: 1px solid var(--new-table-border);
