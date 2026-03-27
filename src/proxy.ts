@@ -1,73 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import acceptLanguage from 'accept-language';
 
-// Supported languages
-acceptLanguage.languages(['en', 'es', 'fr', 'de', 'pt', 'it', 'ja', 'ko', 'zh']);
+const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register'];
+const AUTH_ROUTES = ['/auth/login', '/auth/register'];
 
-const PUBLIC_ROUTES = [
-  '/',
-  '/auth/login',
-  '/auth/register',
-  '/auth/forgot',
-  '/auth/activate',
-  '/p/', // Preview routes
-  '/uploads/', // Static uploads
-  '/icons/', // Static icons
-  '/oauth/', // OAuth callbacks
-];
-
-const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/forgot'];
-
-export default async function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Handle logout
-  if (pathname === '/auth/logout') {
-    const response = NextResponse.redirect(new URL('/auth/login', request.url));
-    response.cookies.delete('auth-token');
-    response.cookies.delete('refresh-token');
-    return response;
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.match(/\.(svg|png|jpg|jpeg|ico|mp4|webp|gif)$/)
+  ) {
+    return NextResponse.next();
   }
 
-  // 2. Language detection and persistence
-  let language = request.cookies.get('language')?.value;
-  
-  if (!language) {
-    language = acceptLanguage.get(request.headers.get('Accept-Language')) || 'en';
-    const response = NextResponse.next();
-    response.cookies.set('language', language, {
-      maxAge: 365 * 24 * 60 * 60, // 1 year
-      path: '/',
-    });
-  }
+  const authToken =
+    request.cookies.get('auth-token')?.value ||
+    // NextAuth v5 (authjs) cookie names
+    request.cookies.get('authjs.session-token')?.value ||
+    request.cookies.get('__Secure-authjs.session-token')?.value ||
+    // NextAuth v4 legacy cookie names (fallback)
+    request.cookies.get('next-auth.session-token')?.value ||
+    request.cookies.get('__Secure-next-auth.session-token')?.value;
 
-  // 3. Check authentication
-  const authToken = request.cookies.get('auth-token')?.value;
   const isAuthenticated = !!authToken;
+  const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
 
-  // 4. Allow public routes
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
-  if (isPublicRoute && !AUTH_ROUTES.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // 5. Handle organization invites
-  if (pathname.startsWith('/invite/')) {
-    if (!isAuthenticated) {
-      const url = new URL('/auth/login', request.url);
-      url.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next();
-  }
-
-  // 6. Redirect authenticated users away from auth pages
-  if (AUTH_ROUTES.includes(pathname) && isAuthenticated) {
+  // Redirect logged-in users away from auth pages
+  if (isAuthRoute && isAuthenticated) {
     return NextResponse.redirect(new URL('/launches', request.url));
   }
 
-  // 7. Protect authenticated routes
-  if (!isAuthenticated && !isPublicRoute) {
+  // Protect all non-public routes
+  if (!isPublicRoute && !isAuthenticated) {
     const url = new URL('/auth/login', request.url);
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
@@ -77,5 +43,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).*)',
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

@@ -26,7 +26,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, email, password }),
       });
       if (response.ok) {
-        router.push('/auth/login');
+        router.push('/launches');
       } else {
         const data = await response.json();
         setError(data.message || 'Registration failed');
@@ -83,9 +83,38 @@ export default function RegisterPage() {
       </div>
 
       <div className={styles.rightPanel}>
-        <div className={styles.rightTitle}>
-          Join <span className={styles.highlight}>20,000+</span> Entrepreneurs
-          <br />Growing Their Social Presence
+        <div className={styles.rightInner}>
+          <div className={styles.rightBadge}>Join 20,000+ creators</div>
+          <h2 className={styles.rightTitle}>
+            Your audience is<br />
+            waiting. <span className={styles.highlight}>Start today.</span>
+          </h2>
+          <p className={styles.rightSubtitle}>
+            Set up in minutes. Schedule across every platform from one place.
+          </p>
+
+          <div className={styles.socialProof}>
+            {[
+              { icon: '🚀', stat: '10M+', label: 'Posts scheduled' },
+              { icon: '📊', stat: '3x',   label: 'Avg. engagement boost' },
+              { icon: '⏱️', stat: '5h',   label: 'Saved per week' },
+            ].map((item) => (
+              <div key={item.stat} className={styles.proofItem}>
+                <span className={styles.proofIcon}>{item.icon}</span>
+                <span className={styles.proofStat}>{item.stat}</span>
+                <span className={styles.proofLabel}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <video
+            className={styles.rightVideo}
+            src="/motion2Fast_Animate_this_modern_SaaS_dashboard_UI_where_a_user_0.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
         </div>
       </div>
     </div>

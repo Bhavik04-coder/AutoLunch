@@ -1,13 +1,14 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import styles from './AppShell.module.scss';
 import { PostizLogo } from './PostizLogo';
 import ThemeToggle from './ThemeToggle';
 import { useUser } from '@/contexts/UserContext';
+import { useSession, signOut } from 'next-auth/react';
 
 interface MenuItem {
   name: string;
@@ -95,7 +96,35 @@ function SidebarItem({ item }: { item: MenuItem }) {
 }
 
 export default function AppShell({ children, title }: { children: ReactNode; title?: string }) {
-  const { user } = useUser();
+  const { user, organization, subscription } = useUser();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Prefer real OAuth session over mock user
+  const displayName = session?.user?.name || user?.name || 'User';
+  const displayEmail = session?.user?.email || user?.email || '';
+  const displayAvatar = session?.user?.image || user?.avatar || null;
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleLogout = async () => {
+    // Clear legacy mock auth cookie
+    document.cookie = 'auth-token=; path=/; max-age=0';
+    // Sign out of NextAuth (clears authjs.session-token) and redirect
+    await signOut({ callbackUrl: '/auth/login' });
+  };
 
   return (
     <div className={styles.shell}>
@@ -125,8 +154,77 @@ export default function AppShell({ children, title }: { children: ReactNode; tit
             <div className={styles.separator} />
             <ThemeToggle />
             <div className={styles.separator} />
-            <div className={styles.userAvatar}>
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+
+            {/* Profile dropdown */}
+            <div className={styles.profileWrap} ref={profileRef}>
+              <button
+                type="button"
+                className={styles.userAvatar}
+                onClick={() => setProfileOpen((o) => !o)}
+                aria-label="Open profile menu"
+              >
+                {displayAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={displayAvatar} alt={displayName} className={styles.avatarImg} />
+                ) : initials}
+              </button>
+
+              {profileOpen && (
+                <div className={styles.profileDropdown}>
+                  {/* User info */}
+                  <div className={styles.profileHeader}>
+                    <div className={styles.profileAvatar}>{initials}</div>
+                    <div className={styles.profileInfo}>
+                      <span className={styles.profileName}>{displayName}</span>
+                      <span className={styles.profileEmail}>{displayEmail}</span>
+                    </div>
+                  </div>
+
+                  {/* Subscription badge */}
+                  {subscription && (
+                    <div className={styles.profileBadge} data-tier={subscription.tier}>
+                      {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)} plan
+                    </div>
+                  )}
+
+                  <div className={styles.profileDivider} />
+
+                  {/* Org */}
+                  {organization && (
+                    <div className={styles.profileOrg}>
+                      <span className={styles.profileOrgIcon}>🏢</span>
+                      <span className={styles.profileOrgName}>{organization.name}</span>
+                      <span className={styles.profileOrgRole}>{organization.role}</span>
+                    </div>
+                  )}
+
+                  <div className={styles.profileDivider} />
+
+                  {/* Links */}
+                  <Link href="/settings" className={styles.profileItem} onClick={() => setProfileOpen(false)}>
+                    <svg width="15" height="15" viewBox="0 0 20 21" fill="none" aria-hidden="true">
+                      <path d="M7.82912 16.6429L8.31616 17.7383C8.46094 18.0644 8.69722 18.3414 8.99635 18.5358C9.29547 18.7303 9.64458 18.8337 10.0013 18.8337C10.3581 18.8337 10.7072 18.7303 11.0063 18.5358C11.3055 18.3414 11.5417 18.0644 11.6865 17.7383L12.1736 16.6429C12.3469 16.2542 12.6386 15.9302 13.0069 15.717C13.3776 15.5032 13.8063 15.4121 14.2319 15.4568L15.4236 15.5837C15.7783 15.6212 16.1363 15.555 16.4541 15.3931C16.772 15.2312 17.0361 14.9806 17.2143 14.6716C17.3928 14.3628 17.4778 14.0089 17.4591 13.6527C17.4403 13.2966 17.3186 12.9535 17.1087 12.6651L16.4032 11.6957C16.152 11.3479 16.0177 10.9293 16.0199 10.5003C16.0198 10.0725 16.1553 9.65562 16.4069 9.30959L17.1125 8.34014C17.3223 8.05179 17.444 7.70872 17.4628 7.35255C17.4815 6.99639 17.3965 6.64244 17.218 6.33366C17.0398 6.02469 16.7757 5.77407 16.4578 5.61218C16.14 5.4503 15.782 5.3841 15.4273 5.42162L14.2356 5.54847C13.81 5.59317 13.3813 5.50209 13.0106 5.28829C12.6415 5.07387 12.3498 4.74812 12.1773 4.35773L11.6865 3.26236C11.5417 2.9363 11.3055 2.65925 11.0063 2.46482C10.7072 2.27039 10.3581 2.16693 10.0013 2.16699C9.64458 2.16693 9.29547 2.27039 8.99635 2.46482C8.69722 2.65925 8.46094 2.9363 8.31616 3.26236L7.82912 4.35773C7.65656 4.74812 7.36485 5.07387 6.99579 5.28829C6.62513 5.50209 6.19634 5.59317 5.77079 5.54847L4.57542 5.42162C4.22069 5.3841 3.8627 5.4503 3.54485 5.61218C3.22699 5.77407 2.96293 6.02469 2.78468 6.33366C2.60619 6.64244 2.52116 6.99639 2.5399 7.35255C2.55864 7.70872 2.68034 8.05179 2.89023 8.34014L3.59579 9.30959C3.8474 9.65562 3.9829 10.0725 3.98282 10.5003C3.9829 10.9282 3.8474 11.345 3.59579 11.6911L2.89023 12.6605C2.68034 12.9489 2.55864 13.2919 2.5399 13.6481C2.52116 14.0043 2.60619 14.3582 2.78468 14.667C2.96311 14.9758 3.2272 15.2263 3.54501 15.3882C3.86282 15.55 4.22072 15.6163 4.57542 15.579L5.76708 15.4522C6.19264 15.4075 6.62143 15.4986 6.99208 15.7124C7.36252 15.9262 7.65559 16.252 7.82912 16.6429ZM9.99985 13.0003C11.3806 13.0003 12.4999 11.881 12.4999 10.5003C12.4999 9.11961 11.3806 8.00033 9.99985 8.00033C8.61914 8.00033 7.49985 9.11961 7.49985 10.5003C7.49985 11.881 8.61914 13.0003 9.99985 13.0003Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Settings
+                  </Link>
+
+                  <Link href="/billing" className={styles.profileItem} onClick={() => setProfileOpen(false)}>
+                    <svg width="15" height="15" viewBox="0 0 20 21" fill="none" aria-hidden="true">
+                      <path d="M7.08341 12.7225C7.08341 13.7964 7.95397 14.667 9.02786 14.667H10.8334C11.984 14.667 12.9167 13.7343 12.9167 12.5837C12.9167 11.4331 11.984 10.5003 10.8334 10.5003H9.16675C8.01615 10.5003 7.08341 9.56759 7.08341 8.41699C7.08341 7.2664 8.01615 6.33366 9.16675 6.33366H10.9723C12.0462 6.33366 12.9167 7.20422 12.9167 8.2781M10.0001 5.08366V6.33366M10.0001 14.667V15.917M18.3334 10.5003C18.3334 15.1027 14.6025 18.8337 10.0001 18.8337C5.39771 18.8337 1.66675 15.1027 1.66675 10.5003C1.66675 5.89795 5.39771 2.16699 10.0001 2.16699C14.6025 2.16699 18.3334 5.89795 18.3334 10.5003Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Billing
+                  </Link>
+
+                  <div className={styles.profileDivider} />
+
+                  <button type="button" className={styles.profileLogout} onClick={handleLogout}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Log out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

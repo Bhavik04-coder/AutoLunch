@@ -143,3 +143,76 @@
   font-size: 12px;
   color: var(--new-textItemBlur);
 }
+
+// Post Tracker Bar
+.tracker {
+  padding: 12px 24px 14px;
+  border-bottom: 1px solid var(--new-bgLineColor);
+  background: var(--new-bgColorInner);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trackerStats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.trackerStat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--new-textItemBlur);
+
+  strong { color: rgb(var(--new-textColor)); font-weight: 600; }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &[data-type='published'] { background: #32d583; }
+  &[data-type='scheduled'] { background: var(--new-btn-primary); }
+  &[data-type='failed']    { background: #f97066; }
+}
+
+.trackerTotal {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(var(--new-textColor));
+}
+
+.trackerBar {
+  height: 8px;
+  background: var(--new-bgColor);
+  border-radius: 99px;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid var(--new-table-border);
+}
+
+.trackerFill {
+  height: 100%;
+  transition: width 0.5s ease;
+  min-width: 0;
+
+  &[data-type='published'] { background: #32d583; }
+  &[data-type='scheduled'] { background: var(--new-btn-primary); }
+  &[data-type='failed']    { background: #f97066; }
+}
+
+.trackerLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--new-textItemBlur);
+  padding: 0 2px;
+}

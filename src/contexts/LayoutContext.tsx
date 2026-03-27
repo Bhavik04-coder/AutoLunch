@@ -62,9 +62,14 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
           return new Response(JSON.stringify(result), { status: 200 });
         }
 
-        if (urlPath === '/posts') {
+        if (urlPath === '/posts' && (!fetchOptions.method || fetchOptions.method === 'GET')) {
           const result = await mockPosts.list();
           return new Response(JSON.stringify(result), { status: 200 });
+        }
+
+        if (urlPath === '/posts' && fetchOptions.method === 'POST') {
+          const result = await mockPosts.create(body);
+          return new Response(JSON.stringify(result), { status: 201 });
         }
 
         // If no mock handler, try real API

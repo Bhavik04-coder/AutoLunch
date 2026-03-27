@@ -1,13 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import styles from './launches.module.scss';
 import { CalendarComponent } from './calendar.component';
 import { NewPostModal } from './new.post.modal';
+import { PostsProvider, usePosts } from '@/contexts/PostsContext';
 
 export function LaunchesComponent() {
+  return (
+    <PostsProvider>
+      <LaunchesInner />
+    </PostsProvider>
+  );
+}
+
+function LaunchesInner() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [showNewPost, setShowNewPost] = useState(false);
+  const { addPost } = usePosts();
 
   return (
     <div className={styles.page}>
@@ -43,39 +53,90 @@ export function LaunchesComponent() {
         </button>
       </div>
 
+      <PostTrackerBar />
       <div className={styles.content}>
         {view === 'calendar' ? <CalendarComponent /> : <PostListView />}
       </div>
 
-      {showNewPost && <NewPostModal onClose={() => setShowNewPost(false)} />}
+      {showNewPost && (
+        <NewPostModal
+          onClose={() => setShowNewPost(false)}
+          onPostCreated={addPost}
+        />
+      )}
+    </div>
+  );
+}
+
+function PostTrackerBar() {
+  const { posts } = usePosts();
+  const total = posts.length;
+  const published = posts.filter((p) => p.status === 'published').length;
+  const scheduled = posts.filter((p) => p.status === 'scheduled').length;
+  const failed = posts.filter((p) => p.status === 'failed').length;
+
+  const publishedPct = total ? Math.round((published / total) * 100) : 0;
+  const scheduledPct = total ? Math.round((scheduled / total) * 100) : 0;
+  const failedPct = total ? Math.round((failed / total) * 100) : 0;
+
+  return (
+    <div className={styles.tracker}>
+      <div className={styles.trackerStats}>
+        <span className={styles.trackerStat}>
+          <span className={styles.dot} data-type="published" />
+          Published <strong>{published}</strong> ({publishedPct}%)
+        </span>
+        <span className={styles.trackerStat}>
+          <span className={styles.dot} data-type="scheduled" />
+          Scheduled <strong>{scheduled}</strong> ({scheduledPct}%)
+        </span>
+        {failed > 0 && (
+          <span className={styles.trackerStat}>
+            <span className={styles.dot} data-type="failed" />
+            Failed <strong>{failed}</strong> ({failedPct}%)
+          </span>
+        )}
+        <span className={styles.trackerTotal}>Total: {total} posts</span>
+      </div>
+      <div className={styles.trackerBar}>
+        <div className={styles.trackerFill} data-type="published" style={{ width: `${publishedPct}%` }} title={`Published: ${publishedPct}%`} />
+        <div className={styles.trackerFill} data-type="scheduled" style={{ width: `${scheduledPct}%` }} title={`Scheduled: ${scheduledPct}%`} />
+        <div className={styles.trackerFill} data-type="failed" style={{ width: `${failedPct}%` }} title={`Failed: ${failedPct}%`} />
+      </div>
+      <div className={styles.trackerLabels}>
+        <span>0%</span>
+        <span>50%</span>
+        <span>100%</span>
+      </div>
     </div>
   );
 }
 
 function PostListView() {
-  const mockPosts = [
-    { id: '1', content: 'Excited to announce our new product launch! 🚀', platforms: ['twitter', 'linkedin'], scheduledAt: '2026-03-20T10:00:00', status: 'scheduled' },
-    { id: '2', content: 'Behind the scenes of our team working hard...', platforms: ['instagram'], scheduledAt: '2026-03-22T14:00:00', status: 'scheduled' },
-    { id: '3', content: 'Check out our latest blog post on social media trends', platforms: ['twitter', 'facebook'], scheduledAt: '2026-03-15T09:00:00', status: 'published' },
-  ];
+  const { posts } = usePosts();
+  const sorted = [...posts].sort(
+    (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+  );
 
   return (
     <div className={styles.listView}>
-      {mockPosts.map((post) => (
-        <div key={post.id} className={styles.postCard}>
-          <div className={styles.postStatus} data-status={post.status} />
-          <div className={styles.postContent}>{post.content}</div>
-          <div className={styles.postMeta}>
-            <div className={styles.postPlatforms}>
-              {post.platforms.map((p) => (
-                <span key={p} className={styles.platformTag}>{p}</span>
-              ))}
-            </div>
-            <div className={styles.postDate}>
-              {new Date(post.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+      {sorted.map((post, index) => (
+        <React.Fragment key={post.id}>
+          <div className={styles.postCard}>
+            <div className={styles.postStatus} data-status={post.status} />
+            <div className={styles.postContent}>{post.content}</div>
+            <div className={styles.postMeta}>
+              <div className={styles.postPlatforms}>
+                {post.platforms.map((p) => (
+                  <span key={p} className={styles.platformTag}>{p}</span>
+                ))}
+              </div>
+              <div className={styles.postDate}>
+                {new Date(post.scheduledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
           </div>
-        </div>
+        </React.Fragment>
       ))}
     </div>
   );

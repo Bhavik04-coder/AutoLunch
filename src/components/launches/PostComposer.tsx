@@ -5,6 +5,8 @@ import styles from './PostComposer.module.scss';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Modal from '../ui/Modal';
+import { useLayout } from '@/contexts/LayoutContext';
+import AIContentGenerator from './AIContentGenerator';
 
 interface PostComposerProps {
   isOpen: boolean;
@@ -28,11 +30,18 @@ const PLATFORMS = [
   { id: 'youtube', name: 'YouTube', icon: '▶', color: '#ff0000' },
 ];
 
+const OLLAMA_URL = process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434';
+
 export default function PostComposer({ isOpen, onClose, onSubmit }: PostComposerProps) {
+  const { fetch: customFetch, apiUrl } = useLayout();
   const [content, setContent] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [media, setMedia] = useState<File[]>([]);
   const [scheduledDate, setScheduledDate] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
+  const [error, setError] = useState('');
 
   const togglePlatform = (platformId: string) => {
     setSelectedPlatforms((prev) =>
@@ -42,16 +51,59 @@ export default function PostComposer({ isOpen, onClose, onSubmit }: PostComposer
     );
   };
 
-  const handleSubmit = () => {
-    if (onSubmit) {
-      onSubmit({
-        content,
-        platforms: selectedPlatforms,
-        scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
-        media,
+  const handleAiEnhance = async () => {
+    if (!content.trim()) return;
+    setIsEnhancing(true);
+    setError('');
+    try {
+      const res = await fetch(`${OLLAMA_URL}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3.2',
+          prompt: `Improve this social media post to be more engaging, concise, and impactful. Keep it under 280 characters. Return only the improved post text, no explanations:\n\n${content}`,
+          stream: false,
+        }),
       });
+      if (!res.ok) throw new Error(`Ollama returned ${res.status}`);
+      const data = await res.json();
+      setContent(data.response?.trim() || content);
+    } catch (err: any) {
+      setError(`AI enhance failed: ${err.message}. Make sure Ollama is running with llama3.2.`);
+    } finally {
+      setIsEnhancing(false);
     }
-    handleClose();
+  };
+
+  const handleSubmit = async () => {
+    if (!content || selectedPlatforms.length === 0) return;
+    setIsSubmitting(true);
+    setError('');
+    try {
+      const res = await customFetch(apiUrl('/posts'), {
+        method: 'POST',
+        body: JSON.stringify({
+          content,
+          platforms: selectedPlatforms,
+          scheduledAt: scheduledDate || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save post');
+      const data = await res.json();
+      if (onSubmit) {
+        onSubmit({
+          content,
+          platforms: selectedPlatforms,
+          scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
+          media,
+        });
+      }
+      handleClose();
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -59,6 +111,7 @@ export default function PostComposer({ isOpen, onClose, onSubmit }: PostComposer
     setSelectedPlatforms([]);
     setMedia([]);
     setScheduledDate('');
+    setError('');
     onClose();
   };
 
@@ -69,6 +122,15 @@ export default function PostComposer({ isOpen, onClose, onSubmit }: PostComposer
   };
 
   return (
+    <>
+    <AIContentGenerator
+      isOpen={isGeneratorOpen}
+      onClose={() => setIsGeneratorOpen(false)}
+      onUseContent={(generated) => {
+        setContent(generated);
+        setIsGeneratorOpen(false);
+      }}
+    />
     <Modal isOpen={isOpen} onClose={handleClose} title="Create New Post">
       <div className={styles.composer}>
         {/* Platform Selection */}
@@ -143,6 +205,7 @@ export default function PostComposer({ isOpen, onClose, onSubmit }: PostComposer
           <label className={styles.label}>Schedule (Optional)</label>
           <input
             type="datetime-local"
+            aria-label="Schedule date and time"
             className={styles.dateInput}
             value={scheduledDate}
             onChange={(e) => setScheduledDate(e.target.value)}
@@ -151,26 +214,36 @@ export default function PostComposer({ isOpen, onClose, onSubmit }: PostComposer
 
         {/* Actions */}
         <div className={styles.actions}>
-          <Button variant="ghost" onClick={handleClose}>
+          {error && <div className={styles.error}>{error}</div>}
+          <Button variant="ghost" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
+            variant="secondary"
+            onClick={() => setIsGeneratorOpen(true)}
+            disabled={isSubmitting || isEnhancing}
+          >
+            🚀 AI Generate
+          </Button>
+          <Button
             variant="ai"
-            onClick={() => {
-              setContent(content + '\n\n✨ AI-generated content here...');
-            }}
+            onClick={handleAiEnhance}
+            isLoading={isEnhancing}
+            disabled={isEnhancing || isSubmitting || !content.trim()}
           >
             ✨ AI Enhance
           </Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
-            disabled={!content || selectedPlatforms.length === 0}
+            isLoading={isSubmitting}
+            disabled={!content || selectedPlatforms.length === 0 || isSubmitting || isEnhancing}
           >
             {scheduledDate ? 'Schedule Post' : 'Post Now'}
           </Button>
         </div>
       </div>
     </Modal>
+    </>
   );
 }

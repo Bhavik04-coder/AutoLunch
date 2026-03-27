@@ -27,10 +27,45 @@
 - Extend platform functionality with plugins
 - Enable or disable plugins per workspace
 
-## Integrations
-- Connect social accounts: X (Twitter), LinkedIn, Instagram, Facebook, YouTube, Reddit, Discord, Telegram
-- View connection status per platform
-- One-click connect and disconnect
+## Brand & Social Accounts
+A unified hub for managing brand identity and social platform connections, organised across six tabs.
+
+### Social Platforms
+- Connect and disconnect 8 platforms: Instagram, Facebook, LinkedIn, Google Business Profile, TikTok, Pinterest, Twitter, YouTube
+- Per-platform FAQ and Watch Videos links
+- Live connection status badge with loading state and toast notifications
+
+### Brand Details
+- Brand identity fields: name, website, industry, tagline/description
+- Brand voice selector: Professional, Casual & Friendly, Witty & Humorous, Inspirational, Authoritative
+- Visual identity: primary and secondary color pickers with hex input
+- Logo upload with live preview (PNG, SVG, JPG)
+- Save with confirmation feedback
+
+### Integrations
+- Toggle switches for 8 third-party tools: Zapier, Slack, Notion, HubSpot, Canva, Google Analytics, Webhooks, Make (Integromat)
+- Webhook configuration: custom endpoint URL + per-event trigger checkboxes (Post published, Post failed, New follower milestone, Analytics report ready)
+
+### Uploads (Media Library)
+- Drag & drop file upload zone
+- Supports images, videos, and documents (up to 50 MB each)
+- Filter by file type: All, Image, Video, Document
+- Thumbnail previews for images, type icons for other files
+- Delete files individually
+- Pre-seeded with sample assets
+
+### Templates
+- 8 built-in post templates across 4 categories: Promotional, Educational, Engagement, Announcements
+- Per-template platform tags and content preview
+- Search and category filter
+- "Use Template" copies template to clipboard with confirmation
+- Create custom templates with name and content fields
+
+### Exports
+- Generate reports by type: Analytics Overview, Post Performance, Audience Insights, Content Calendar, Engagement Summary
+- Date range selector: Last 7/30/90 days, This year, All time
+- Format selector: PDF, CSV, XLSX
+- Export history table with file name, format badge, size, date, and download button
 
 ## Settings
 - Profile management: name, email, timezone

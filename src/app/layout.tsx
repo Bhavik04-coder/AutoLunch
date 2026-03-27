@@ -4,6 +4,7 @@ import './global.scss';
 import './globals.css';
 import { VariableProvider } from '@/contexts/VariableContext';
 import { LayoutProvider } from '@/contexts/LayoutContext';
+import { SessionProvider } from 'next-auth/react';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -26,7 +27,9 @@ export default function RootLayout({
       <body className={`${plusJakartaSans.className} !bg-[var(--new-bgColor)] text-[var(--new-btn-text)]`}>
         <VariableProvider>
           <LayoutProvider>
-            {children}
+            <SessionProvider>
+              {children}
+            </SessionProvider>
           </LayoutProvider>
         </VariableProvider>
       </body>

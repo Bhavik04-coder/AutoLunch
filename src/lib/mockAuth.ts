@@ -154,34 +154,56 @@ export const mockAuth = {
   },
 };
 
+// In-memory posts store
+const MOCK_POSTS_STORE: Array<{
+  id: string;
+  content: string;
+  scheduledAt: string;
+  platforms: string[];
+  status: 'scheduled' | 'published' | 'failed';
+}> = [
+  {
+    id: '1',
+    content: 'Check out our new product launch! 🚀 #ProductLaunch #Innovation',
+    scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    platforms: ['Twitter', 'LinkedIn', 'Facebook'],
+    status: 'scheduled',
+  },
+  {
+    id: '2',
+    content: 'Behind the scenes of our latest campaign. Stay tuned for more updates!',
+    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    platforms: ['Instagram', 'Twitter'],
+    status: 'scheduled',
+  },
+  {
+    id: '3',
+    content: 'Thank you for 10k followers! We appreciate your support 🎉',
+    scheduledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    platforms: ['Twitter', 'LinkedIn'],
+    status: 'published',
+  },
+];
+
 // Mock posts data
 export const mockPosts = {
+  create: async (data: { content: string; platforms: string[]; scheduledAt?: string }) => {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const post = {
+      id: Date.now().toString(),
+      content: data.content,
+      platforms: data.platforms,
+      scheduledAt: data.scheduledAt || new Date().toISOString(),
+      status: data.scheduledAt ? ('scheduled' as const) : ('published' as const),
+    };
+    MOCK_POSTS_STORE.push(post);
+    return { post };
+  },
+
   list: async () => {
     await new Promise(resolve => setTimeout(resolve, 300));
     return {
-      posts: [
-        {
-          id: '1',
-          content: 'Check out our new product launch! 🚀 #ProductLaunch #Innovation',
-          scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          platforms: ['Twitter', 'LinkedIn', 'Facebook'],
-          status: 'scheduled' as const,
-        },
-        {
-          id: '2',
-          content: 'Behind the scenes of our latest campaign. Stay tuned for more updates!',
-          scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          platforms: ['Instagram', 'Twitter'],
-          status: 'scheduled' as const,
-        },
-        {
-          id: '3',
-          content: 'Thank you for 10k followers! We appreciate your support 🎉',
-          scheduledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          platforms: ['Twitter', 'LinkedIn'],
-          status: 'published' as const,
-        },
-      ],
+      posts: MOCK_POSTS_STORE,
     };
   },
 };
