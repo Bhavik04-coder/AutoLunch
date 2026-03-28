@@ -20,7 +20,7 @@
 }
 
 .chipActive {
-  background: color-mix(in srgb, var(--color, #6366f1) 12%, transparent);
-  border-color: color-mix(in srgb, var(--color, #6366f1) 50%, transparent);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.45);
   color: rgb(var(--new-textColor));
 }

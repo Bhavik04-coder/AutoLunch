@@ -132,12 +132,12 @@
 .authPlatformDesc { font-size: 12px; color: var(--new-textItemBlur); margin-top: 2px; }
 .authPlatformActions { display: flex; }
 .authConnectBtn {
-  width: 100%; padding: 8px 16px; background: color-mix(in srgb, var(--platform-color, #6366f1) 12%, transparent);
-  color: var(--platform-color, #6366f1); border: 1px solid color-mix(in srgb, var(--platform-color, #6366f1) 35%, transparent);
+  width: 100%; padding: 8px 16px; background: rgba(99, 102, 241, 0.1);
+  color: var(--platform-color, #6366f1); border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: background .2s;
-  &:hover { background: color-mix(in srgb, var(--platform-color, #6366f1) 20%, transparent); }
+  &:hover { background: rgba(99, 102, 241, 0.18); }
   &:disabled { opacity: .5; cursor: not-allowed; }
 }
 .integrationCard {
@@ -479,4 +479,100 @@
 .cgModelPill {
   background: rgba(99,102,241,.1); border-color: rgba(99,102,241,.25);
   color: var(--new-btn-primary); font-weight: 600;
+}
+
+/* ── Post Now to LinkedIn ──────────────────────────────────────────────── */
+.cgPostNowBtn {
+  padding: 7px 18px;
+  background: linear-gradient(135deg, #0077b5 0%, #005a8c 100%);
+  color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .2s, box-shadow .2s, transform .1s;
+  display: flex; align-items: center; gap: 6px;
+  &:hover {
+    background: linear-gradient(135deg, #008fd4 0%, #006ba3 100%);
+    box-shadow: 0 4px 14px rgba(0,119,181,.35);
+    transform: translateY(-1px);
+  }
+  &:active { transform: translateY(0); }
+  &:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+}
+
+.cgPostFeedback {
+  padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px; animation: cgFadeIn .25s ease;
+}
+.cgPostSuccess {
+  background: rgba(50,213,131,.08); border: 1px solid rgba(50,213,131,.3);
+  color: #32d583;
+}
+.cgPostError {
+  background: rgba(249,112,102,.08); border: 1px solid rgba(249,112,102,.25);
+  color: #f97066;
+}
+
+/* ── Image Upload (Brand Details AI Caption Generator) ──────────────────── */
+.cgImageSection {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.cgImageDropZone {
+  border: 2px dashed var(--new-table-border); border-radius: 12px; padding: 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
+  transition: border-color .2s, background .2s;
+  &:hover { border-color: var(--new-btn-primary); background: rgba(99,102,241,.04); }
+}
+.cgImageDropZoneActive {
+  border-color: var(--new-btn-primary); background: rgba(99,102,241,.07);
+}
+.cgImageDropIcon { font-size: 30px; }
+.cgImageDropText { font-size: 14px; font-weight: 500; color: rgb(var(--new-textColor)); }
+.cgImageDropHint { font-size: 12px; color: var(--new-textItemBlur); }
+
+.cgImagePreviewWrap {
+  position: relative; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--new-table-border);
+}
+.cgImagePreview {
+  display: block; width: 100%; max-height: 220px; object-fit: cover;
+}
+.cgImageOverlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.0) 50%);
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 16px;
+  gap: 8px; opacity: 0; transition: opacity .2s;
+  .cgImagePreviewWrap:hover & { opacity: 1; }
+}
+.cgImageName {
+  font-size: 13px; color: rgba(255,255,255,.85); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cgImageActions { display: flex; gap: 8px; }
+.cgImageChangeBtn,
+.cgImageRemoveBtn {
+  padding: 5px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: background .15s, transform .1s;
+  &:active { transform: scale(.96); }
+}
+.cgImageChangeBtn {
+  background: rgba(255,255,255,.18); color: white;
+  &:hover { background: rgba(255,255,255,.28); }
+}
+.cgImageRemoveBtn {
+  background: rgba(249,112,102,.25); color: #fca5a1;
+  &:hover { background: rgba(249,112,102,.4); }
+}
+
+/* Image preview inside the LinkedIn result card */
+.cgCardImagePreview {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--new-bgColorInner);
+  border: 1px solid var(--new-bgLineColor); border-radius: 10px;
+}
+.cgCardImageThumb {
+  width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex-shrink: 0;
+  border: 1px solid var(--new-table-border);
+}
+.cgCardImageLabel {
+  font-size: 12px; color: var(--new-textItemBlur); font-weight: 500;
 }

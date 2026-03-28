@@ -56,9 +56,9 @@
 .connectBtn {
   width: 100%;
   padding: 9px 16px;
-  background: color-mix(in srgb, var(--color, #6366f1) 12%, transparent);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--color, #6366f1);
-  border: 1px solid color-mix(in srgb, var(--color, #6366f1) 35%, transparent);
+  border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -68,7 +68,7 @@
   justify-content: center;
   gap: 8px;
   transition: background 0.2s;
-  &:hover { background: color-mix(in srgb, var(--color, #6366f1) 22%, transparent); }
+  &:hover { background: rgba(99, 102, 241, 0.18); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
