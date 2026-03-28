@@ -1,24 +1,24 @@
 .shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--new-bgColor);
-  padding: 12px;
-  gap: 8px;
 }
 
 .sidebar {
   width: 80px;
   flex-shrink: 0;
   background: var(--new-bgColorInner);
-  border-radius: 12px;
+  border-right: 1px solid var(--new-sep);
   position: relative;
 }
 
 .sidebarInner {
   position: fixed;
-  top: 12px;
-  width: 64px;
-  height: calc(100vh - 24px);
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -108,7 +108,6 @@
 .main {
   flex: 1;
   background: var(--new-bgLineColor);
-  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -167,6 +166,7 @@
   flex: 1;
   display: flex;
   overflow: hidden;
+  height: 100%;
 }
 
 // Profile dropdown

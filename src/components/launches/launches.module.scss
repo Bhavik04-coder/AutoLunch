@@ -16,6 +16,7 @@ $radius:  12px;
 .dashboard {
   display: flex;
   height: 100%;
+  width: 100%;
   overflow: hidden;
   background: $bg;
   position: relative;
@@ -50,9 +51,9 @@ $radius:  12px;
   border-right: 1px solid $border;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;          // panel itself does NOT scroll
   flex-shrink: 0;
+  height: 100%;
 
   @media (max-width: 900px) {
     width: 100%;
@@ -61,6 +62,21 @@ $radius:  12px;
     border-bottom: 1px solid $border;
     max-height: 50vh;
   }
+}
+
+// scrollable inner body
+.createBody {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;             // critical for flex children to scroll
+
+  scrollbar-width: thin;
+  scrollbar-color: $border transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: $border; border-radius: 4px; }
+  &::-webkit-scrollbar-thumb:hover { background: $gray9; }
 }
 
 .createHeader {
@@ -447,52 +463,84 @@ $radius:  12px;
   &:hover { border-color: $orange; color: $orange; }
 }
 
+.genImgBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.07);
+  color: #7c3aed;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.14);
+    border-color: #7c3aed;
+  }
+}
+
 .charCount {
   margin-left: auto;
   font-size: 12px;
   color: $gray9;
 }
 
-// AI Agents button active state
+// AI Agents button — active state (orange, matches panel theme)
 .aiBtnActive {
-  background: rgba(99, 102, 241, 0.15) !important;
-  border-color: rgba(99, 102, 241, 0.5) !important;
-  color: #a5b4fc !important;
+  background: rgba(255, 107, 53, 0.14) !important;
+  border-color: $orange !important;
+  color: $orange2 !important;
 }
 
-// Agent picker panel
+// ── Agent Picker Panel ────────────────────────────────────────────────────────
 .agentPickerPanel {
-  margin: 0 12px 8px;
-  background: var(--new-bgColor, #111);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
+  margin: 6px 14px 6px;
+  background: $white;
+  border: 1.5px solid rgba(255, 107, 53, 0.18);
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.07), 0 1px 4px rgba(0,0,0,0.04);
 }
 
+// Prompt input row
 .agentPickerPromptRow {
-  padding: 10px 12px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
 }
 
 .agentPickerInput {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 1;
+  background: $white;
+  border: 1.5px solid $border;
   border-radius: 8px;
   padding: 7px 11px;
-  font-size: 12px;
-  color: var(--new-textColor, #e5e5e5);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: $dark;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
-  &::placeholder { color: rgba(255, 255, 255, 0.3); }
-  &:focus { border-color: rgba(99, 102, 241, 0.5); }
+  &::placeholder { color: $gray9; }
+  &:focus {
+    border-color: $orange;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  }
 }
 
+// Agent chip grid
 .agentChipGrid {
   display: flex;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px 12px 10px;
   overflow-x: auto;
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
@@ -502,46 +550,53 @@ $radius:  12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 10px;
-  min-width: 72px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  gap: 5px;
+  padding: 10px 10px 8px;
+  min-width: 76px;
+  background: #f9f9f9;
+  border: 1.5px solid $border;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.12s;
   position: relative;
 
   &:hover:not(:disabled) {
-    background: rgba(99, 102, 241, 0.12);
-    border-color: rgba(99, 102, 241, 0.35);
-    transform: translateY(-1px);
+    background: rgba(255, 107, 53, 0.06);
+    border-color: rgba(255, 107, 53, 0.4);
+    box-shadow: 0 3px 12px rgba(255, 107, 53, 0.12);
+    transform: translateY(-2px);
   }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 
 .agentChipActive {
-  background: rgba(99, 102, 241, 0.18) !important;
-  border-color: rgba(99, 102, 241, 0.55) !important;
+  background: rgba(255, 107, 53, 0.09) !important;
+  border-color: $orange !important;
+  box-shadow: 0 3px 12px rgba(255, 107, 53, 0.18) !important;
+
+  .agentChipAvatar { border-color: rgba(255, 107, 53, 0.4); }
+  .agentChipName   { color: $orange2; }
 }
 
 .agentChipAvatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid $border;
 }
 
 .agentChipName {
   font-size: 11px;
-  font-weight: 600;
-  color: var(--new-textColor, #e5e5e5);
+  font-weight: 700;
+  color: $dark;
   white-space: nowrap;
 }
 
 .agentChipRole {
-  font-size: 9.5px;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 9px;
+  color: $gray6;
   white-space: nowrap;
   text-align: center;
   line-height: 1.2;
@@ -549,28 +604,29 @@ $radius:  12px;
 
 .agentChipSpinner {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 5px;
+  right: 5px;
   width: 8px;
   height: 8px;
-  border: 1.5px solid rgba(99, 102, 241, 0.3);
-  border-top-color: #818cf8;
+  border: 1.5px solid rgba(255, 107, 53, 0.25);
+  border-top-color: $orange;
   border-radius: 50%;
-  animation: agentSpin 0.7s linear infinite;
+  animation: agentSpin 0.65s linear infinite;
 }
 
+// Generated output area
 .agentOutput {
-  margin: 0 12px 10px;
-  background: rgba(99, 102, 241, 0.06);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  margin: 0 12px 12px;
+  background: #fff8f5;
+  border: 1.5px solid rgba(255, 107, 53, 0.22);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px 10px;
 }
 
 .agentOutputText {
   font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--new-textColor, #e5e5e5);
+  line-height: 1.6;
+  color: $dark;
   white-space: pre-wrap;
   margin: 0 0 10px;
 }
@@ -582,41 +638,47 @@ $radius:  12px;
 }
 
 .agentInsertBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11.5px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 7px;
-  background: rgba(99, 102, 241, 0.85);
-  color: #fff;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: $orange;
+  color: $white;
   border: none;
   cursor: pointer;
-  transition: background 0.15s;
-  &:hover { background: #6366f1; }
+  transition: background 0.15s, transform 0.1s;
+  &:hover { background: $orange2; transform: translateY(-1px); }
 }
 
 .agentAppendBtn {
   font-size: 11.5px;
   font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--new-textColor, #e5e5e5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: inherit;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: $white;
+  color: $gray6;
+  border: 1.5px solid $border;
   cursor: pointer;
-  transition: background 0.15s;
-  &:hover { background: rgba(255, 255, 255, 0.12); }
+  transition: background 0.15s, border-color 0.15s;
+  &:hover { background: #f5f5f5; border-color: $gray9; }
 }
 
 .agentDismissBtn {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 12px;
   padding: 5px 8px;
   border-radius: 7px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.35);
+  color: $gray9;
   border: none;
   cursor: pointer;
-  &:hover { color: rgba(255, 255, 255, 0.7); }
+  font-family: inherit;
+  &:hover { color: $gray6; background: #f5f5f5; }
 }
 
 @keyframes agentSpin {
@@ -640,9 +702,10 @@ $radius:  12px;
   align-items: center;
   justify-content: space-between;
   padding: 12px 22px 20px;
-  margin-top: 12px;
   gap: 12px;
   border-top: 1px solid $border;
+  flex-shrink: 0;
+  background: $white;
 }
 
 .datePickerRow {
@@ -720,6 +783,7 @@ $radius:  12px;
   overflow: hidden;
   background: $white;
   min-width: 0;
+  height: 100%;
 }
 
 .calHeader {
@@ -879,6 +943,7 @@ $radius:  12px;
   gap: 12px;
   padding: 14px 24px 20px;
   min-height: 0;
+  height: 100%;
 }
 
 // Calendar grid
@@ -894,6 +959,7 @@ $radius:  12px;
   border-radius: $radius;
   overflow: hidden;
   min-height: 0;
+  height: 100%;
 }
 
 .calDayName {
@@ -910,6 +976,7 @@ $radius:  12px;
 
 .calEmptyCell {
   background: $white;
+  min-height: 0;
 }
 
 .calCell {
@@ -920,7 +987,7 @@ $radius:  12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-height: 60px;
+  min-height: 0;
 
   &:hover { background: #fafafa; }
 
