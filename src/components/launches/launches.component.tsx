@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './launches.module.scss';
 import { PostsProvider, usePosts } from '@/contexts/PostsContext';
 import { useLinkedInPost } from '@/hooks/useLinkedInPost';
@@ -141,6 +142,7 @@ function CreatePanel({
   const [isDragging, setIsDragging]     = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const { postToLinkedIn, isPosting: isPostingToLI, result: liResult, message: liMsg } = useLinkedInPost();
 
@@ -259,6 +261,9 @@ function CreatePanel({
           </svg>
         </button>
       </div>
+
+      {/* ── Scrollable body ── */}
+      <div className={styles.createBody}>
 
       {/* ── Account + platform buttons row ── */}
       <div className={styles.accountRow}>
@@ -395,6 +400,21 @@ function CreatePanel({
             <path d="M6 9l6 6 6-6"/>
           </svg>
         </button>
+        <button
+          type="button"
+          className={styles.genImgBtn}
+          title="Generate image with Nabr AI"
+          onClick={() => {
+            const prompt = content.trim();
+            const query = prompt ? `?nabr=${encodeURIComponent(prompt)}` : '';
+            router.push(`/agents${query}`);
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+          </svg>
+          Generate Image
+        </button>
         <button type="button" className={styles.emojiBtn} aria-label="Add emoji">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
             <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
@@ -492,6 +512,8 @@ function CreatePanel({
           {liResult === 'success' ? '✅' : '⚠️'} {liMsg}
         </div>
       )}
+
+      </div>{/* end createBody */}
 
       {/* ── Footer: date picker + schedule btn ── */}
       <div className={styles.createFooter}>

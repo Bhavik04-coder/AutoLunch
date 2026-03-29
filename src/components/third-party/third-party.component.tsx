@@ -930,9 +930,18 @@ function TemplatesTab() {
   const [creating,  setCreating]  = useState(false);
   const [newName,   setNewName]   = useState('');
   const [newBody,   setNewBody]   = useState('');
-  const [customs,   setCustoms]   = useState<typeof TEMPLATES>([]);
 
-  const all = [...TEMPLATES, ...customs];
+  // edit state: id → { name, preview }
+  const [editing,   setEditing]   = useState<Record<string, { name: string; preview: string }>>({});
+  // image state: id → url | 'loading'
+  const [sampleImgs, setSampleImgs] = useState<Record<string, string | 'loading'>>({});
+
+  const [allTemplates, setAllTemplates] = useState([...TEMPLATES]);
+
+  // one file-input ref per card
+  const uploadRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const all = [...allTemplates];
   const filtered = all.filter((t) =>
     (category === 'All' || t.category === category) &&
     t.name.toLowerCase().includes(search.toLowerCase())
@@ -940,11 +949,51 @@ function TemplatesTab() {
 
   const handleCreate = () => {
     if (!newName.trim()) return;
-    setCustoms((p) => [...p, {
+    setAllTemplates((p) => [...p, {
       id: 'c' + Date.now(), name: newName, category: 'Promotional',
       platforms: ['all'], preview: newBody || 'Custom template content...',
     }]);
     setNewName(''); setNewBody(''); setCreating(false);
+  };
+
+  const startEdit = (t: typeof TEMPLATES[number]) => {
+    setEditing((prev) => ({ ...prev, [t.id]: { name: t.name, preview: t.preview } }));
+  };
+
+  const saveEdit = (id: string) => {
+    const e = editing[id];
+    if (!e) return;
+    setAllTemplates((prev) => prev.map((t) => t.id === id ? { ...t, name: e.name, preview: e.preview } : t));
+    setEditing((prev) => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  const cancelEdit = (id: string) => {
+    setEditing((prev) => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  const generateSampleImage = async (t: typeof TEMPLATES[number]) => {
+    setSampleImgs((prev) => ({ ...prev, [t.id]: 'loading' }));
+    try {
+      const prompt = `social media post template for ${t.name}, ${t.category} style, modern graphic design, vibrant, professional`;
+      const encoded = encodeURIComponent(prompt);
+      const seed = Math.floor(Math.random() * 999999);
+      const url = `https://image.pollinations.ai/prompt/${encoded}?width=800&height=800&seed=${seed}&nologo=true`;
+      await new Promise<void>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject();
+        img.src = url;
+      });
+      setSampleImgs((prev) => ({ ...prev, [t.id]: url }));
+    } catch {
+      setSampleImgs((prev) => { const n = { ...prev }; delete n[t.id]; return n; });
+    }
+  };
+
+  const handleUpload = (id: string, file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(file);
+    setSampleImgs((prev) => ({ ...prev, [id]: url }));
   };
 
   return (
@@ -991,29 +1040,154 @@ function TemplatesTab() {
         </div>
 
         <div className={styles.templateGrid}>
-          {filtered.map((t) => (
-            <div key={t.id} className={styles.templateCard}>
-              <div className={styles.templateHeader}>
-                <span className={styles.templateCategory}>{t.category}</span>
-                <div className={styles.templatePlatforms}>
-                  {t.platforms.map((pid) => (
-                    <span key={pid} className={styles.tplPlatformDot} title={pid}>
-                      {pid === 'all' ? '🌐' : PLATFORM_SVG[pid] ?? pid}
-                    </span>
-                  ))}
+          {filtered.map((t) => {
+            const isEditing = !!editing[t.id];
+            const editState = editing[t.id];
+            const imgState = sampleImgs[t.id];
+
+            return (
+              <div key={t.id} className={`${styles.templateCard} ${isEditing ? styles.templateCardEditing : ''}`}>
+                <div className={styles.templateHeader}>
+                  <span className={styles.templateCategory}>{t.category}</span>
+                  <div className={styles.templatePlatforms}>
+                    {t.platforms.map((pid) => (
+                      <span key={pid} className={styles.tplPlatformDot} title={pid}>
+                        {pid === 'all' ? '🌐' : PLATFORM_SVG[pid] ?? pid}
+                      </span>
+                    ))}
+                  </div>
                 </div>
+
+                {isEditing ? (
+                  <>
+                    <input
+                      className={styles.tplEditName}
+                      value={editState.name}
+                      onChange={(e) => setEditing((prev) => ({ ...prev, [t.id]: { ...prev[t.id], name: e.target.value } }))}
+                      placeholder="Template name"
+                    />
+                    <textarea
+                      className={styles.tplEditBody}
+                      rows={3}
+                      value={editState.preview}
+                      onChange={(e) => setEditing((prev) => ({ ...prev, [t.id]: { ...prev[t.id], preview: e.target.value } }))}
+                      placeholder="Template content..."
+                    />
+                    <div className={styles.templateActions}>
+                      <button type="button" className={styles.saveBtn} onClick={() => saveEdit(t.id)}>Save</button>
+                      <button type="button" className={styles.cancelBtn} onClick={() => cancelEdit(t.id)}>Cancel</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.templateName}>{t.name}</div>
+                    <div className={styles.templatePreview}>{t.preview}</div>
+
+                    {/* Image area — shows uploaded/generated image OR drop zone */}
+                    {imgState && imgState !== 'loading' ? (
+                      <div className={styles.tplSampleImgWrap}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imgState} alt={`${t.name} sample`} className={styles.tplSampleImg} />
+                        <div className={styles.tplImgOverlay}>
+                          <button
+                            type="button"
+                            className={styles.tplImgChangeBtn}
+                            onClick={() => uploadRefs.current[t.id]?.click()}
+                            title="Replace image"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.tplImgRemoveBtn}
+                            onClick={() => setSampleImgs((prev) => { const n = { ...prev }; delete n[t.id]; return n; })}
+                            title="Remove image"
+                          >✕</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={styles.tplDropZone}
+                        onClick={() => uploadRefs.current[t.id]?.click()}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add(styles.tplDropZoneOver); }}
+                        onDragLeave={(e) => e.currentTarget.classList.remove(styles.tplDropZoneOver)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.remove(styles.tplDropZoneOver);
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) handleUpload(t.id, file);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && uploadRefs.current[t.id]?.click()}
+                        aria-label="Upload template image"
+                      >
+                        {imgState === 'loading' ? (
+                          <><span className={styles.tplImgSpinner} /><span>Generating...</span></>
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="22" height="22">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                            </svg>
+                            <span>Drop image or click to upload</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* hidden file input */}
+                    <input
+                      ref={(el) => { uploadRefs.current[t.id] = el; }}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUpload(t.id, file);
+                        e.target.value = '';
+                      }}
+                    />
+
+                    <div className={styles.templateActions}>
+                      {/* row 1 — Use */}
+                      <button type="button" className={styles.useBtn}
+                        onClick={() => { setUsed(t.id); setTimeout(() => setUsed(null), 2000); }}>
+                        {used === t.id ? '✓ Copied!' : 'Use Template'}
+                      </button>
+                      {/* row 2 — Edit + AI Generate */}
+                      <div className={styles.templateActionsRow}>
+                        <button type="button" className={styles.editTplBtn} onClick={() => startEdit(t)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.tplGenImgBtn} ${imgState === 'loading' ? styles.tplGenImgBtnLoading : ''}`}
+                          onClick={() => generateSampleImage(t)}
+                          disabled={imgState === 'loading'}
+                          title="Generate image with AI"
+                        >
+                          {imgState === 'loading' ? (
+                            <><span className={styles.tplImgSpinner} /> Generating...</>
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                              </svg>
+                              {imgState ? 'Regenerate' : 'AI Image'}
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className={styles.templateName}>{t.name}</div>
-              <div className={styles.templatePreview}>{t.preview}</div>
-              <div className={styles.templateActions}>
-                <button type="button" className={styles.useBtn}
-                  onClick={() => { setUsed(t.id); setTimeout(() => setUsed(null), 2000); }}>
-                  {used === t.id ? '✓ Copied!' : 'Use Template'}
-                </button>
-                <button type="button" className={styles.editTplBtn}>Edit</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {filtered.length === 0 && <div className={styles.emptyFiles}>No templates match your search</div>}
         </div>
       </div>

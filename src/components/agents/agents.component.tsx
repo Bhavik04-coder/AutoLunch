@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './agents.module.scss';
 import ReactMarkdown from 'react-markdown';
 
@@ -173,6 +174,16 @@ function AgentCard({ agent, isActive, onOpen }: { agent: AgentData; isActive: bo
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export function AgentsComponent() {
+  return (
+    <Suspense fallback={null}>
+      <AgentsInner />
+    </Suspense>
+  );
+}
+
+function AgentsInner() {
+  const searchParams = useSearchParams();
+  const nabrPrompt = searchParams.get('nabr') ?? '';
   const [activeAgent, setActiveAgent] = useState<AgentData | null>(null);
   const [agents, setAgents] = useState(AGENTS_DATA);
   const [message, setMessage] = useState('');
@@ -191,7 +202,11 @@ export function AgentsComponent() {
 
   const [pb, setPb] = useState<PromptBuilderState>(INITIAL_PB_STATE);
   const [pbCopied, setPbCopied] = useState('');
+  const [isSavingImg, setIsSavingImg] = useState(false);
+  const [savedImgPath, setSavedImgPath] = useState<string | null>(null);
+  const [saveImgError, setSaveImgError] = useState('');
 
+  const pbAnalyzeRef = useRef<((idea: string) => void) | null>(null);
   const IMG_STYLES = ['realistic', 'anime', 'digital art', 'oil painting', 'watercolor', 'cinematic', 'minimalist', '3D render'];
   const isPromptBuilder = activeAgent?.id === VISUAL_PROMPT_BUILDER_ID;
 
@@ -222,6 +237,23 @@ export function AgentsComponent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-open Nabr with prompt from ?nabr= query param
+  useEffect(() => {
+    if (!nabrPrompt) return;
+    const nabr = AGENTS_DATA.find((a) => a.id === VISUAL_PROMPT_BUILDER_ID);
+    if (!nabr) return;
+    setActiveAgent(nabr);
+    setPb(INITIAL_PB_STATE);
+    setMessages([]);
+    setMessage('');
+    // Small delay so the chat panel mounts before we trigger analysis
+    const t = setTimeout(() => {
+      pbAnalyzeRef.current?.(nabrPrompt);
+    }, 150);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nabrPrompt]);
+
   const openAgent = (agent: AgentData) => {
     setActiveAgent(agent);
     setPb(INITIAL_PB_STATE);
@@ -242,8 +274,7 @@ export function AgentsComponent() {
   const pbAnalyze = async (idea: string) => {
     setPb((prev) => ({ ...prev, step: 'analyzing', initialPrompt: idea }));
     setMessages((prev) => [...prev, { role: 'user', text: idea }, { role: 'assistant', text: '🔍 Analyzing your idea...' }]);
-    setIsLoading(true);
-    try {
+    setIsLoading(true);    try {
       const res = await fetch('/api/prompt-enhancer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -256,7 +287,7 @@ export function AgentsComponent() {
       setPb((prev) => ({ ...prev, step: 'asking', questions, activeQuestionIndex: 0 }));
       setMessages((prev) => [
         ...prev.slice(0, -1),
-        { role: 'assistant', text: `Great! I need a few details to craft the perfect prompt. **Question 1 of ${questions.length}:**` },
+        { role: 'assistant', text: `**Question 1 of ${questions.length}:**` },
       ]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Something went wrong.';
@@ -266,6 +297,9 @@ export function AgentsComponent() {
       setIsLoading(false);
     }
   };
+
+  // keep ref in sync so the nabrPrompt effect can call it
+  pbAnalyzeRef.current = pbAnalyze;
 
   const pbAnswerQuestion = async (answer: string) => {
     const q = pb.questions[pb.activeQuestionIndex];
@@ -300,7 +334,7 @@ export function AgentsComponent() {
     }
   };
 
-  const pbReset = () => { setPb(INITIAL_PB_STATE); setMessages([]); };
+  const pbReset = () => { setPb(INITIAL_PB_STATE); setMessages([]); setSavedImgPath(null); setSaveImgError(''); };
 
   const pbHandleSend = () => {
     if (!message.trim() || isLoading) return;
@@ -314,6 +348,55 @@ export function AgentsComponent() {
     navigator.clipboard.writeText(text);
     setPbCopied(key);
     setTimeout(() => setPbCopied(''), 2000);
+  };
+
+  const pbOpenInGemini = () => {
+    if (!pb.result) return;
+    // Copy prompt to clipboard then open Gemini
+    navigator.clipboard.writeText(pb.result.positive_prompt).catch(() => {});
+    window.open(`https://gemini.google.com/app`, '_blank', 'noopener,noreferrer');
+  };
+
+  const pbGenerateAndSave = async () => {
+    if (!pb.result) return;
+    setIsSavingImg(true);
+    setSavedImgPath(null);
+    setSaveImgError('');
+    try {
+      // Generate image via Pollinations using the positive prompt
+      const styledPrompt = `${pb.result.positive_prompt}, high quality, detailed`;
+      const encoded = encodeURIComponent(styledPrompt);
+      const seed = Math.floor(Math.random() * 999999);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&seed=${seed}&nologo=true`;
+
+      // Wait for it to load
+      await new Promise<void>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Image generation failed'));
+        img.src = imageUrl;
+      });
+
+      // Save via server API
+      const slug = pb.initialPrompt
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .slice(0, 40);
+      const filename = `nabr_${slug}_${Date.now()}`;
+      const res = await fetch('/api/save-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, filename }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save image');
+      setSavedImgPath(data.path);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Something went wrong.';
+      setSaveImgError(msg);
+    } finally {
+      setIsSavingImg(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -454,6 +537,43 @@ export function AgentsComponent() {
                           </div>
                           <pre className={styles.promptText}>{pb.result.negative_prompt}</pre>
                         </div>
+
+                        {/* ── Action Buttons ── */}
+                        <div className={styles.promptActionsDivider} />
+                        <div className={styles.promptActionsLabel}>Use this prompt</div>
+                        <div className={styles.promptActionsRow}>
+                          <button
+                            type="button"
+                            className={styles.promptGeminiBtn}
+                            onClick={pbOpenInGemini}
+                            title="Copy prompt & open Gemini"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            Copy &amp; Open Gemini
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.promptSaveBtn}
+                            onClick={() => {
+                              if (!pb.result) return;
+                              navigator.clipboard.writeText(pb.result.positive_prompt).catch(() => {});
+                              window.open('https://app.comfy.org/', '_blank', 'noopener,noreferrer');
+                            }}
+                            title="Copy prompt & open ComfyUI"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            Open ComfyUI
+                          </button>
+                        </div>
+
+                        {saveImgError && (
+                          <p className={styles.promptSaveError}>⚠️ {saveImgError}</p>
+                        )}
+
                         <div className={styles.promptActions}>
                           <button type="button" className={styles.promptResetBtn} onClick={pbReset}>🔄 Start Over</button>
                         </div>
@@ -461,7 +581,7 @@ export function AgentsComponent() {
                     );
                   }
 
-                  if (isPromptBuilder && pb.step === 'asking' && msg.role === 'assistant' && msg.text.startsWith('**Question')) {
+                  if (isPromptBuilder && msg.role === 'assistant' && msg.text.startsWith('**Question')) {
                     const qIdx = pb.questions.findIndex((_, qi) => msg.text.includes(`Question ${qi + 1} of`));
                     const question = qIdx >= 0 ? pb.questions[qIdx] : null;
                     return (

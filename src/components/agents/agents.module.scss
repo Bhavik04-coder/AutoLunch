@@ -629,3 +629,165 @@ $radius: 14px;
   cursor: pointer; transition: all 0.2s;
   &:hover { background: rgba(255, 107, 53, 0.05); border-color: $orange; color: $orange; }
 }
+
+// ── AI Action Buttons (Gemini + Save to Project) ───────────────────────────────
+.promptActionsDivider {
+  height: 1px;
+  background: $border;
+  margin: 0 -2px;
+}
+
+.promptActionsLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $lightGray;
+}
+
+.promptActionsRow {
+  display: flex;
+  gap: 8px;
+}
+
+.promptGeminiBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
+  color: $white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.25);
+
+  &:hover {
+    background: linear-gradient(135deg, #1557b0 0%, #2b6fd4 100%);
+    box-shadow: 0 4px 14px rgba(66, 133, 244, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active { transform: translateY(0); }
+}
+
+.promptSaveBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, $orange 0%, $orange2 100%);
+  color: $white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(255, 107, 53, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) { transform: translateY(0); }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+  }
+}
+
+.promptSaveBtnLoading {
+  opacity: 0.9 !important;
+  cursor: wait !important;
+  background: linear-gradient(135deg, #e55a22 0%, #cc4b1f 100%) !important;
+}
+
+.promptSaveSpinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: $white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.promptSaveError {
+  font-size: 12px;
+  color: #ef4444;
+  margin: 0;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.promptSavedBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.promptSavedIcon { font-size: 20px; flex-shrink: 0; }
+
+.promptSavedInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.promptSavedTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.promptSavedPath {
+  font-size: 10.5px;
+  color: $gray;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.promptSavedViewBtn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: #16a34a;
+  color: $white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+
+  &:hover { background: #15803d; }
+}
+
