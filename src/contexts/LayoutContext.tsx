@@ -48,28 +48,68 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
           return new Response(JSON.stringify(result), { status: 200 });
         }
 
+        // Route /auth/me and /posts/* to real Next.js API routes (Supabase-backed)
         if (urlPath === '/auth/me') {
-          const token = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth-token='))
-            ?.split('=')[1];
-          
-          if (!token) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-          }
-
-          const result = await mockAuth.me(token);
-          return new Response(JSON.stringify(result), { status: 200 });
+          return fetch('/api/auth/me', { credentials: 'include' });
         }
 
         if (urlPath === '/posts' && (!fetchOptions.method || fetchOptions.method === 'GET')) {
-          const result = await mockPosts.list();
-          return new Response(JSON.stringify(result), { status: 200 });
+          return fetch('/api/posts', { credentials: 'include' });
         }
 
         if (urlPath === '/posts' && fetchOptions.method === 'POST') {
-          const result = await mockPosts.create(body);
-          return new Response(JSON.stringify(result), { status: 201 });
+          return fetch('/api/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+          });
+        }
+
+        if (urlPath.match(/^\/posts\/[^/]+$/) && fetchOptions.method === 'PATCH') {
+          const id = urlPath.split('/')[2];
+          return fetch(`/api/posts/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+          });
+        }
+
+        if (urlPath.match(/^\/posts\/[^/]+$/) && fetchOptions.method === 'DELETE') {
+          const id = urlPath.split('/')[2];
+          return fetch(`/api/posts/${id}`, { method: 'DELETE', credentials: 'include' });
+        }
+
+        if (urlPath.match(/^\/posts\/[^/]+\/schedule$/) && fetchOptions.method === 'POST') {
+          const id = urlPath.split('/')[2];
+          return fetch(`/api/posts/${id}/schedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+          });
+        }
+
+        if (urlPath === '/integrations' && (!fetchOptions.method || fetchOptions.method === 'GET')) {
+          return fetch('/api/integrations', { credentials: 'include' });
+        }
+
+        if (urlPath.match(/^\/integrations\/[^/]+\/disconnect$/) && fetchOptions.method === 'POST') {
+          const provider = urlPath.split('/')[2];
+          return fetch(`/api/integrations/${provider}/disconnect`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+        }
+
+        if (urlPath === '/media' && (!fetchOptions.method || fetchOptions.method === 'GET')) {
+          return fetch('/api/media', { credentials: 'include' });
+        }
+
+        if (urlPath.match(/^\/media\/[^/]+$/) && fetchOptions.method === 'DELETE') {
+          const id = urlPath.split('/')[2];
+          return fetch(`/api/media/${id}`, { method: 'DELETE', credentials: 'include' });
         }
 
         // If no mock handler, try real API

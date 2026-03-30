@@ -1,27 +1,40 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './plugs.module.scss';
 
-const INITIAL_PLUGS = [
-  { id: '1', name: 'RSS Feed',  description: 'Auto-post content from any RSS or Atom feed directly to your social channels.', icon: '📡', connected: true,  docs: '#' },
-  { id: '2', name: 'Zapier',    description: 'Connect AutoLaunch with 5,000+ apps and automate your entire content workflow.', icon: '⚡', connected: false, docs: '#' },
-  { id: '3', name: 'Make.com',  description: 'Build powerful multi-step automations with Make\'s visual workflow builder.', icon: '🔧', connected: false, docs: '#' },
-  { id: '4', name: 'Webhook',   description: 'Receive real-time data from any external source and trigger posts automatically.', icon: '🔗', connected: true,  docs: '#' },
-  { id: '5', name: 'N8N',       description: 'Open-source workflow automation — self-host and own your integrations.', icon: '🔄', connected: false, docs: '#' },
-  { id: '6', name: 'Public API', description: 'Integrate AutoLaunch directly into your own apps with our REST API.', icon: '🛠️', connected: false, docs: '#' },
-];
+interface Plug {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  docs: string;
+  connected: boolean;
+}
 
 export function PlugsComponent() {
-  const [plugs, setPlugs] = useState(INITIAL_PLUGS);
+  const [plugs, setPlugs] = useState<Plug[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState('');
 
-  const toggle = async (id: string) => {
-    setLoading(id);
-    await new Promise((r) => setTimeout(r, 800));
-    setPlugs((prev) => prev.map((p) => (p.id === id ? { ...p, connected: !p.connected } : p)));
-    const plug = plugs.find((p) => p.id === id);
-    setToast(`${plug?.name} ${plug?.connected ? 'disconnected' : 'connected'}`);
+  useEffect(() => {
+    fetch('/api/plugs', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => setPlugs(data.plugs ?? []))
+      .catch(() => {});
+  }, []);
+
+  const toggle = async (plug: Plug) => {
+    setLoading(plug.slug);
+    const newEnabled = !plug.connected;
+    setPlugs((prev) => prev.map((p) => p.slug === plug.slug ? { ...p, connected: newEnabled } : p));
+    await fetch('/api/plugs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ slug: plug.slug, enabled: newEnabled }),
+    });
+    setToast(`${plug.name} ${newEnabled ? 'connected' : 'disconnected'}`);
     setTimeout(() => setToast(''), 3000);
     setLoading(null);
   };
@@ -45,7 +58,7 @@ export function PlugsComponent() {
       <div className={styles.content}>
         <div className={styles.grid}>
           {plugs.map((plug) => (
-            <div key={plug.id} className={`${styles.card} ${plug.connected ? styles.cardConnected : ''}`}>
+            <div key={plug.slug} className={`${styles.card} ${plug.connected ? styles.cardConnected : ''}`}>
               <div className={styles.cardHeader}>
                 <div className={styles.iconWrap}>{plug.icon}</div>
                 <div className={`${styles.badge} ${plug.connected ? styles.connected : ''}`}>
@@ -59,10 +72,10 @@ export function PlugsComponent() {
                 <button
                   type="button"
                   className={plug.connected ? styles.disconnectBtn : styles.connectBtn}
-                  onClick={() => toggle(plug.id)}
-                  disabled={loading === plug.id}
+                  onClick={() => toggle(plug)}
+                  disabled={loading === plug.slug}
                 >
-                  {loading === plug.id
+                  {loading === plug.slug
                     ? <span className={styles.loadingSpinner} />
                     : plug.connected ? 'Disable' : 'Enable'}
                 </button>

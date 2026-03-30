@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import styles from './settings.module.scss';
 
@@ -45,13 +45,13 @@ export function SettingsComponent() {
   }, [session]);
 
   // Brand DNA state
-  const [brandName, setBrandName] = useState('AutoLaunch');
-  const [brandUrl, setBrandUrl] = useState('https://autolaunch.app');
-  const [brandTagline, setBrandTagline] = useState('Schedule smarter, grow faster');
+  const [brandName, setBrandName] = useState('');
+  const [brandUrl, setBrandUrl] = useState('');
+  const [brandTagline, setBrandTagline] = useState('');
   const [brandColors, setBrandColors] = useState(['#612bd3', '#ffffff', '#0085ff', '#32d583', '#f97066']);
-  const [brandValues, setBrandValues] = useState(['Innovation', 'Consistency', 'Growth', 'Authenticity']);
-  const [brandAesthetic, setBrandAesthetic] = useState(['Modern Minimalism', 'Tech-Forward', 'Bold & Clean']);
-  const [brandTone, setBrandTone] = useState(['Professional', 'Inspiring', 'Approachable']);
+  const [brandValues, setBrandValues] = useState<string[]>([]);
+  const [brandAesthetic, setBrandAesthetic] = useState<string[]>([]);
+  const [brandTone, setBrandTone] = useState<string[]>([]);
   const [brandFont, setBrandFont] = useState('Inter');
   const [brandImages, setBrandImages] = useState<string[]>([]);
   const [newValue, setNewValue] = useState('');
@@ -59,8 +59,31 @@ export function SettingsComponent() {
   const [newTone, setNewTone] = useState('');
   const [brandSaved, setBrandSaved] = useState(false);
 
+  // Load brand DNA from DB
+  const loadBrand = useCallback(async () => {
+    const res = await fetch('/api/brand', { credentials: 'include' });
+    if (!res.ok) return;
+    const { brand } = await res.json();
+    setBrandName(brand.name ?? '');
+    setBrandUrl(brand.url ?? '');
+    setBrandTagline(brand.tagline ?? '');
+    setBrandColors(brand.colors?.length ? brand.colors : ['#612bd3', '#ffffff', '#0085ff', '#32d583', '#f97066']);
+    setBrandValues(brand.values ?? []);
+    setBrandAesthetic(brand.aesthetic ?? []);
+    setBrandTone(brand.tone ?? []);
+    setBrandFont(brand.font ?? 'Inter');
+    setBrandImages(brand.images ?? []);
+  }, []);
+
+  useEffect(() => { loadBrand(); }, [loadBrand]);
+
   const handleBrandSave = async () => {
-    await new Promise((r) => setTimeout(r, 500));
+    await fetch('/api/brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ brand: { name: brandName, url: brandUrl, tagline: brandTagline, colors: brandColors, values: brandValues, aesthetic: brandAesthetic, tone: brandTone, font: brandFont, images: brandImages } }),
+    });
     setBrandSaved(true);
     setTimeout(() => setBrandSaved(false), 2500);
   };

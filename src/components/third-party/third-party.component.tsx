@@ -990,8 +990,12 @@ function TemplatesTab() {
     setEditing((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
-  const generateSampleImage = (t: typeof TEMPLATES[number]) => {
-    const prompt = `social media post template for ${t.name}, ${t.category} style, modern graphic design, vibrant, professional`;
+  const generateSampleImage = (t: typeof allTemplates[number]) => {
+    // Use the actual template text as the visual prompt so Nabr gets real context
+    const templateText = editing[t.id]?.preview ?? t.preview;
+    const prompt = `Create a visual image for this social media post:\n\n"${templateText}"\n\nTemplate: ${t.name} (${t.category} style). Make it modern, vibrant and professional.`;
+    // Also copy the template text to clipboard so user has it ready
+    navigator.clipboard.writeText(templateText).catch(() => {});
     router.push(`/agents?nabr=${encodeURIComponent(prompt)}`);
   };
 
@@ -1155,9 +1159,14 @@ function TemplatesTab() {
                     />
 
                     <div className={styles.templateActions}>
-                      {/* row 1 — Use */}
+                      {/* row 1 — Use (copies template text to clipboard) */}
                       <button type="button" className={styles.useBtn}
-                        onClick={() => { setUsed(t.id); setTimeout(() => setUsed(null), 2000); }}>
+                        onClick={() => {
+                          const text = editing[t.id]?.preview ?? t.preview;
+                          navigator.clipboard.writeText(text).catch(() => {});
+                          setUsed(t.id);
+                          setTimeout(() => setUsed(null), 2000);
+                        }}>
                         {used === t.id ? '✓ Copied!' : 'Use Template'}
                       </button>
                       {/* row 2 — Edit + AI Generate */}
@@ -1172,14 +1181,12 @@ function TemplatesTab() {
                           type="button"
                           className={styles.tplGenImgBtn}
                           onClick={() => generateSampleImage(t)}
-                          title="Generate image with Nabr AI"
+                          title="Copies template text & opens Nabr Visual Prompt Builder"
                         >
-                          <>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
-                              <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-                            </svg>
-                            AI Image
-                          </>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                            <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                          </svg>
+                          AI Image
                         </button>
                       </div>
                     </div>

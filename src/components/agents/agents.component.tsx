@@ -10,6 +10,7 @@ const VISUAL_PROMPT_BUILDER_ID = '5';
 
 interface AgentData {
   id: string;
+  slug: string;
   name: string;
   role: string;
   image: string;
@@ -41,82 +42,40 @@ const INITIAL_PB_STATE: PromptBuilderState = {
   step: 'idle', initialPrompt: '', questions: [], activeQuestionIndex: 0, answers: {}, result: null,
 };
 
-const AGENTS_DATA: AgentData[] = [
+const FALLBACK_AGENTS: AgentData[] = [
   {
-    id: '1',
-    name: 'Echo',
-    role: 'Content Writer',
-    image: '/agents_imgs/agent1.png',
-    status: 'active',
-    tasksThisWeek: 1,
-    openTickets: 1,
-    successRate: 94,
-    avgResolution: '1 Day',
+    id: '1', slug: 'echo', name: 'Echo', role: 'Content Writer', image: '/agents_imgs/agent1.png',
+    status: 'active', tasksThisWeek: 0, openTickets: 0, successRate: 94, avgResolution: '1 Day',
     lastActivity: 'Generated LinkedIn post for product launch',
     prompt: 'You are a social media content writer. Help the user create engaging, platform-optimized posts. Keep responses concise and actionable.',
   },
   {
-    id: '2',
-    name: 'Spark',
-    role: 'Marketing Agent',
-    image: '/agents_imgs/agent2.png',
-    status: 'active',
-    tasksThisWeek: 1,
-    openTickets: 1,
-    successRate: 91,
-    avgResolution: '1 Day',
+    id: '2', slug: 'spark', name: 'Spark', role: 'Marketing Agent', image: '/agents_imgs/agent2.png',
+    status: 'active', tasksThisWeek: 0, openTickets: 0, successRate: 91, avgResolution: '1 Day',
     lastActivity: 'Optimized hashtag set for Instagram campaign',
     prompt: "You are a hashtag strategy expert. Suggest relevant, trending hashtags for the user's content. Group them by reach (broad, niche, branded). Keep it concise.",
   },
   {
-    id: '3',
-    name: 'Fixr',
-    role: 'Analytics Agent',
-    image: '/agents_imgs/agent3.png',
-    status: 'active',
-    tasksThisWeek: 1,
-    openTickets: 1,
-    successRate: 88,
-    avgResolution: '1 Day',
+    id: '3', slug: 'fixr', name: 'Fixr', role: 'Analytics Agent', image: '/agents_imgs/agent3.png',
+    status: 'active', tasksThisWeek: 0, openTickets: 0, successRate: 88, avgResolution: '1 Day',
     lastActivity: 'Analyzed engagement patterns for Q1 report',
     prompt: 'You are a social media engagement analyst. Help the user understand what content patterns drive the most engagement. Give specific, data-driven advice.',
   },
   {
-    id: '4',
-    name: 'Closi',
-    role: 'Trend Spotter',
-    image: '/agents_imgs/agent4.png',
-    status: 'active',
-    tasksThisWeek: 1,
-    openTickets: 1,
-    successRate: 87,
-    avgResolution: '1 Day',
+    id: '4', slug: 'closi', name: 'Closi', role: 'Trend Spotter', image: '/agents_imgs/agent4.png',
+    status: 'active', tasksThisWeek: 0, openTickets: 0, successRate: 87, avgResolution: '1 Day',
     lastActivity: 'Identified 3 viral trends in the tech niche',
     prompt: 'You are a trend analysis expert. Help the user identify trending topics and viral content opportunities in their niche. Be specific and timely.',
   },
   {
-    id: VISUAL_PROMPT_BUILDER_ID,
-    name: 'Nabr',
-    role: 'Visual Prompt Builder',
-    image: '/agents_imgs/agent5.png',
-    status: 'active',
-    tasksThisWeek: 1,
-    openTickets: 1,
-    successRate: 96,
-    avgResolution: '1 Day',
+    id: VISUAL_PROMPT_BUILDER_ID, slug: 'nabr', name: 'Nabr', role: 'Visual Prompt Builder', image: '/agents_imgs/agent5.png',
+    status: 'active', tasksThisWeek: 0, openTickets: 0, successRate: 96, avgResolution: '1 Day',
     lastActivity: 'Generated ComfyUI prompt for product banner',
     prompt: 'visual-prompt-builder',
   },
   {
-    id: '6',
-    name: 'Ledgr',
-    role: 'Scheduler Agent',
-    image: '/agents_imgs/agent2.png',
-    status: 'idle',
-    tasksThisWeek: 1,
-    openTickets: 1,
-    successRate: 92,
-    avgResolution: '1 Day',
+    id: '6', slug: 'ledgr', name: 'Ledgr', role: 'Scheduler Agent', image: '/agents_imgs/agent2.png',
+    status: 'idle', tasksThisWeek: 0, openTickets: 0, successRate: 92, avgResolution: '1 Day',
     lastActivity: 'Scheduled 12 posts across 4 platforms',
     prompt: 'You are a content scheduling expert. Help users plan and optimize their posting schedule for maximum engagement. Consider time zones, platform algorithms, and audience behavior.',
   },
@@ -185,17 +144,18 @@ export function AgentsComponent() {
 function AgentsInner() {
   const searchParams = useSearchParams();
   const nabrPrompt = searchParams.get('nabr') ?? '';
+  const imagePrompt = searchParams.get('imagePrompt') ?? '';
   const [activeAgent, setActiveAgent] = useState<AgentData | null>(null);
-  const [agents, setAgents] = useState(AGENTS_DATA);
+  const [agents, setAgents] = useState<AgentData[]>(FALLBACK_AGENTS);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'image'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'image'>(() => imagePrompt ? 'image' : 'chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  const [imgPrompt, setImgPrompt] = useState('');
+  const [imgPrompt, setImgPrompt] = useState(imagePrompt);
   const [generatedImgs, setGeneratedImgs] = useState<string[]>([]);
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
   const [imgError, setImgError] = useState('');
@@ -210,6 +170,72 @@ function AgentsInner() {
   const pbAnalyzeRef = useRef<((idea: string) => void) | null>(null);
   const IMG_STYLES = ['realistic', 'anime', 'digital art', 'oil painting', 'watercolor', 'cinematic', 'minimalist', '3D render'];
   const isPromptBuilder = activeAgent?.id === VISUAL_PROMPT_BUILDER_ID;
+
+  // Load agents from DB — merges live stats on top of fallback data
+  useEffect(() => {
+    fetch('/api/agents', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.agents?.length) return;
+        // Merge DB stats into fallback agents (keeps prompt/image from fallback)
+        setAgents((prev) => prev.map((a) => {
+          const db = data.agents.find((d: any) =>
+            d.slug === a.slug || (a.id === VISUAL_PROMPT_BUILDER_ID && d.slug === 'nabr')
+          );
+          if (!db) return a;
+          return { ...a, tasksThisWeek: db.tasksThisWeek ?? a.tasksThisWeek, openTickets: db.openTickets ?? a.openTickets, successRate: db.successRate ?? a.successRate, lastActivity: db.lastActivity || a.lastActivity };
+        }));
+      })
+      .catch(() => {}); // silently keep fallback on error
+  }, []);
+
+  const nabrAutoOpenedRef = useRef(false);
+  const imageAutoGeneratedRef = useRef(false);
+
+  // Auto-generate image when ?imagePrompt= is present
+  useEffect(() => {
+    if (!imagePrompt || imageAutoGeneratedRef.current) return;
+    imageAutoGeneratedRef.current = true;
+    setActiveTab('image');
+    setImgPrompt(imagePrompt);
+    // Small delay to let state settle before triggering generation
+    const t = setTimeout(() => {
+      setIsGeneratingImg(true);
+      setImgError('');
+      const styledPrompt = `${imagePrompt.trim()}, realistic style`;
+      const encoded = encodeURIComponent(styledPrompt);
+      const seed = Math.floor(Math.random() * 999999);
+      const url = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&seed=${seed}&nologo=true`;
+      const img = new Image();
+      img.onload = () => {
+        setGeneratedImgs([url]);
+        setIsGeneratingImg(false);
+      };
+      img.onerror = () => {
+        setImgError('Generation failed. Try a different prompt.');
+        setIsGeneratingImg(false);
+      };
+      img.src = url;
+    }, 200);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagePrompt]);
+
+  // Auto-open Nabr when agents load and a ?nabr= prompt is present
+  useEffect(() => {
+    if (!nabrPrompt || nabrAutoOpenedRef.current || !agents.length) return;
+    const nabr = agents.find((a) => a.id === VISUAL_PROMPT_BUILDER_ID);
+    if (!nabr) return;
+    nabrAutoOpenedRef.current = true;
+    setActiveAgent(nabr);
+    setPb(INITIAL_PB_STATE);
+    setMessages([]);
+    setMessage('');
+    const t = setTimeout(() => pbAnalyzeRef.current?.(nabrPrompt), 150);
+    return () => clearTimeout(t);
+  // agents.length is intentional — we want to re-run once agents are loaded
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nabrPrompt, agents.length]);
 
   const handleGenerateImage = async () => {
     if (!imgPrompt.trim()) return;
@@ -237,23 +263,6 @@ function AgentsInner() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Auto-open Nabr with prompt from ?nabr= query param
-  useEffect(() => {
-    if (!nabrPrompt) return;
-    const nabr = AGENTS_DATA.find((a) => a.id === VISUAL_PROMPT_BUILDER_ID);
-    if (!nabr) return;
-    setActiveAgent(nabr);
-    setPb(INITIAL_PB_STATE);
-    setMessages([]);
-    setMessage('');
-    // Small delay so the chat panel mounts before we trigger analysis
-    const t = setTimeout(() => {
-      pbAnalyzeRef.current?.(nabrPrompt);
-    }, 150);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nabrPrompt]);
 
   const openAgent = (agent: AgentData) => {
     setActiveAgent(agent);
@@ -322,6 +331,7 @@ function AgentsInner() {
         setPb((prev) => ({ ...prev, step: 'done', result: data }));
         setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', text: '__PROMPT_RESULT__', promptResult: data }]);
         setAgents((prev) => prev.map((a) => a.id === VISUAL_PROMPT_BUILDER_ID ? { ...a, tasksThisWeek: a.tasksThisWeek + 1 } : a));
+        fetch('/api/agents/nabr/task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ lastActivity: 'Generated ComfyUI prompt' }) }).catch(() => {});
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Something went wrong.';
         setPb((prev) => ({ ...prev, step: 'asking', activeQuestionIndex: pb.activeQuestionIndex }));
@@ -420,6 +430,8 @@ function AgentsInner() {
       const reply = data.response?.trim() || 'No response received.';
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
       setAgents((prev) => prev.map((a) => a.id === activeAgent.id ? { ...a, tasksThisWeek: a.tasksThisWeek + 1 } : a));
+      const slug = agents.find((a) => a.id === activeAgent.id)?.slug ?? activeAgent.id;
+      fetch(`/api/agents/${slug}/task`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ lastActivity: `Responded to: ${userText.slice(0, 60)}` }) }).catch(() => {});
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -481,9 +493,6 @@ function AgentsInner() {
           <div className={styles.panelTabs}>
             <button type="button" className={`${styles.panelTab} ${activeTab === 'chat' ? styles.panelTabActive : ''}`} onClick={() => setActiveTab('chat')}>
               💬 Chat
-            </button>
-            <button type="button" className={`${styles.panelTab} ${activeTab === 'image' ? styles.panelTabActive : ''}`} onClick={() => setActiveTab('image')}>
-              🎨 Image Gen
             </button>
             <button type="button" className={styles.closeChat} onClick={closeChat} aria-label="Close">✕</button>
           </div>

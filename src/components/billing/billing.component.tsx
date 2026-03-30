@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './billing.module.scss';
 
 const PLANS = [
@@ -17,25 +17,49 @@ const PLANS = [
   },
 ];
 
-const INVOICES = [
-  { date: 'Mar 1, 2026', desc: 'Pro Plan — Monthly' },
-  { date: 'Feb 1, 2026', desc: 'Pro Plan — Monthly' },
-  { date: 'Jan 1, 2026', desc: 'Free Plan' },
-];
+interface Invoice {
+  id: string;
+  description: string;
+  status: string;
+  createdAt: string;
+}
 
 export function BillingComponent() {
   const [current, setCurrent] = useState('free');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    fetch('/api/billing', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.subscription?.tier) setCurrent(data.subscription.tier);
+        if (data.invoices) setInvoices(data.invoices);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleUpgrade = async (planId: string) => {
     if (planId === current) return;
     setLoading(planId);
-    await new Promise((r) => setTimeout(r, 1000));
+    await fetch('/api/billing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ tier: planId }),
+    });
     setCurrent(planId);
     setLoading(null);
     const plan = PLANS.find((p) => p.id === planId);
     setToast(`✓ Upgraded to ${plan?.name} plan`);
+    // Add to local invoice list immediately
+    setInvoices((prev) => [{
+      id: Date.now().toString(),
+      description: `${plan?.name} Plan — Monthly`,
+      status: 'paid',
+      createdAt: new Date().toISOString(),
+    }, ...prev]);
     setTimeout(() => setToast(''), 3000);
   };
 
@@ -58,14 +82,11 @@ export function BillingComponent() {
               >
                 {plan.popular && <div className={styles.popularBadge}>✦ Most Popular</div>}
                 {isCurrent && <div className={styles.currentBadge}>✓ Active</div>}
-
                 <div className={styles.planHeader}>
                   <div className={styles.planName}>{plan.name}</div>
                   {plan.tag && !plan.popular && <div className={styles.planTag}>{plan.tag}</div>}
                 </div>
-
                 <div className={styles.divider} />
-
                 <ul className={styles.features}>
                   {plan.features.map((f) => (
                     <li key={f} className={styles.feature}>
@@ -76,7 +97,6 @@ export function BillingComponent() {
                     </li>
                   ))}
                 </ul>
-
                 <button
                   type="button"
                   className={isCurrent ? styles.currentBtn : styles.upgradeBtn}
@@ -103,11 +123,13 @@ export function BillingComponent() {
               <tr><th>Date</th><th>Description</th><th>Status</th></tr>
             </thead>
             <tbody>
-              {INVOICES.map((inv, i) => (
-                <tr key={i}>
-                  <td>{inv.date}</td>
-                  <td>{inv.desc}</td>
-                  <td><span className={styles.paid}>Paid</span></td>
+              {invoices.length === 0 ? (
+                <tr><td colSpan={3} style={{ textAlign: 'center', opacity: 0.5 }}>No billing history yet</td></tr>
+              ) : invoices.map((inv) => (
+                <tr key={inv.id}>
+                  <td>{new Date(inv.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                  <td>{inv.description}</td>
+                  <td><span className={styles.paid}>{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span></td>
                 </tr>
               ))}
             </tbody>

@@ -1,6 +1,8 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Twitter from 'next-auth/providers/twitter';
+import { upsertUser, ensureDefaultSubscription } from '@/lib/db/users';
+import { upsertConnectedAccount } from '@/lib/db/integrations';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
@@ -134,8 +136,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (new URL(url).origin === baseUrl) return url;
       return `${baseUrl}/third-party`;
     },
-    async jwt({ token, account }) {
-      if (account) {
+    async jwt({ token, account, profile }) {
+      if (account && profile) {
+        // Persist user + connected account to Supabase on every OAuth sign-in
+        try {
+          const dbUser = await upsertUser({
+            id: token.sub as string,
+            email: (profile as any).email ?? token.email ?? '',
+            name: (profile as any).name ?? token.name ?? '',
+            avatar: (profile as any).picture ?? (profile as any).image ?? null,
+          });
+          await ensureDefaultSubscription(dbUser.id);
+          await upsertConnectedAccount(dbUser.id, {
+            provider: account.provider,
+            name: dbUser.name,
+            accessToken: account.access_token as string,
+          });
+        } catch (e) {
+          console.error('[auth] Supabase upsert failed:', e);
+        }
+
         const connected = (token.connected as Record<string, { accessToken: string; connectedAt: number }>) ?? {};
         connected[account.provider] = {
           accessToken: account.access_token as string,
