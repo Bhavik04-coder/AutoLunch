@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import { useLinkedInPost } from '@/hooks/useLinkedInPost';
 import styles from './third-party.module.scss';
@@ -835,13 +836,22 @@ function IntegrationsTab() {
 /* ── Uploads ──────────────────────────────────────────────────────────────── */
 type UploadFile = { id: string; name: string; size: string; type: string; url: string; date: string };
 
+const STOCK_IMAGES = [
+  'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80', // social media dashboard
+  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80', // analytics
+  'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=400&q=80', // instagram
+  'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=80',    // team
+];
+
 function UploadsTab() {
-  const [files,    setFiles]   = useState<UploadFile[]>([
-    { id: 'u1', name: 'brand-hero.png',   size: '1.2 MB', type: 'image',    url: '', date: 'Mar 18, 2026' },
-    { id: 'u2', name: 'product-demo.mp4', size: '24 MB',  type: 'video',    url: '', date: 'Mar 15, 2026' },
-    { id: 'u3', name: 'logo-white.svg',   size: '48 KB',  type: 'image',    url: '', date: 'Mar 10, 2026' },
-    { id: 'u4', name: 'team-photo.jpg',   size: '3.4 MB', type: 'image',    url: '', date: 'Mar 5, 2026'  },
-    { id: 'u5', name: 'brand-guide.pdf',  size: '5.1 MB', type: 'document', url: '', date: 'Feb 28, 2026' },
+  const router = useRouter();
+  const [files, setFiles] = useState<UploadFile[]>([
+    { id: 'u1', name: 'brand-hero.png',      size: '1.2 MB', type: 'image',    url: STOCK_IMAGES[0], date: 'Mar 18, 2026' },
+    { id: 'u2', name: 'product-demo.mp4',    size: '24 MB',  type: 'video',    url: '',              date: 'Mar 15, 2026' },
+    { id: 'u3', name: 'analytics-cover.jpg', size: '980 KB', type: 'image',    url: STOCK_IMAGES[1], date: 'Mar 12, 2026' },
+    { id: 'u4', name: 'team-photo.jpg',      size: '3.4 MB', type: 'image',    url: STOCK_IMAGES[3], date: 'Mar 5, 2026'  },
+    { id: 'u5', name: 'brand-guide.pdf',     size: '5.1 MB', type: 'document', url: '',              date: 'Feb 28, 2026' },
+    { id: 'u6', name: 'social-banner.jpg',   size: '2.1 MB', type: 'image',    url: STOCK_IMAGES[2], date: 'Feb 20, 2026' },
   ]);
   const [dragging, setDragging] = useState(false);
   const [filter,   setFilter]   = useState<'all'|'image'|'video'|'document'>('all');
@@ -870,7 +880,15 @@ function UploadsTab() {
             <h3 className={styles.sectionTitle}>Media Library</h3>
             <p className={styles.sectionDesc}>Upload and manage assets used across your social posts.</p>
           </div>
-          <button type="button" className={styles.saveBtn} onClick={() => fileRef.current?.click()}>+ Upload Files</button>
+          <div className={styles.uploadsHeaderActions}>
+            <button type="button" className={styles.nabrBtn} onClick={() => router.push('/agents?nabr=social media banner, modern design, vibrant colors, professional')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+              </svg>
+              Generate with Nabr
+            </button>
+            <button type="button" className={styles.saveBtn} onClick={() => fileRef.current?.click()}>+ Upload Files</button>
+          </div>
         </div>
 
         <div className={`${styles.dropZone} ${dragging ? styles.dropZoneActive : ''}`}
@@ -924,6 +942,7 @@ function UploadsTab() {
 
 /* ── Templates ────────────────────────────────────────────────────────────── */
 function TemplatesTab() {
+  const router = useRouter();
   const [category,  setCategory]  = useState('All');
   const [search,    setSearch]    = useState('');
   const [used,      setUsed]      = useState<string | null>(null);
@@ -971,23 +990,9 @@ function TemplatesTab() {
     setEditing((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
-  const generateSampleImage = async (t: typeof TEMPLATES[number]) => {
-    setSampleImgs((prev) => ({ ...prev, [t.id]: 'loading' }));
-    try {
-      const prompt = `social media post template for ${t.name}, ${t.category} style, modern graphic design, vibrant, professional`;
-      const encoded = encodeURIComponent(prompt);
-      const seed = Math.floor(Math.random() * 999999);
-      const url = `https://image.pollinations.ai/prompt/${encoded}?width=800&height=800&seed=${seed}&nologo=true`;
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => reject();
-        img.src = url;
-      });
-      setSampleImgs((prev) => ({ ...prev, [t.id]: url }));
-    } catch {
-      setSampleImgs((prev) => { const n = { ...prev }; delete n[t.id]; return n; });
-    }
+  const generateSampleImage = (t: typeof TEMPLATES[number]) => {
+    const prompt = `social media post template for ${t.name}, ${t.category} style, modern graphic design, vibrant, professional`;
+    router.push(`/agents?nabr=${encodeURIComponent(prompt)}`);
   };
 
   const handleUpload = (id: string, file: File) => {
@@ -1165,21 +1170,16 @@ function TemplatesTab() {
                         </button>
                         <button
                           type="button"
-                          className={`${styles.tplGenImgBtn} ${imgState === 'loading' ? styles.tplGenImgBtnLoading : ''}`}
+                          className={styles.tplGenImgBtn}
                           onClick={() => generateSampleImage(t)}
-                          disabled={imgState === 'loading'}
-                          title="Generate image with AI"
+                          title="Generate image with Nabr AI"
                         >
-                          {imgState === 'loading' ? (
-                            <><span className={styles.tplImgSpinner} /> Generating...</>
-                          ) : (
-                            <>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
-                                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-                              </svg>
-                              {imgState ? 'Regenerate' : 'AI Image'}
-                            </>
-                          )}
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                              <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                            </svg>
+                            AI Image
+                          </>
                         </button>
                       </div>
                     </div>

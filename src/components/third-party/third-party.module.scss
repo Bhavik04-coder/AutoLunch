@@ -64,6 +64,20 @@
 .sectionTitle  { font-size: 17px; font-weight: 700; color: rgb(var(--new-textColor)); margin: 0; }
 .sectionDesc   { font-size: 13px; color: var(--new-textItemBlur); margin: 0; }
 
+.uploadsHeaderActions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.nabrBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+  &:hover { background: linear-gradient(135deg, #6d28d9, #5b21b6); box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35); transform: translateY(-1px); }
+  &:active { transform: translateY(0); }
+}
+
 /* ── Form elements ──────────────────────────────────────────────────────── */
 .formGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
 .fieldFull { grid-column: 1 / -1; }

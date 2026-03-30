@@ -25,6 +25,7 @@ interface AgentData {
 interface Message {
   role: 'assistant' | 'user';
   text: string;
+  promptResult?: { positive_prompt: string; negative_prompt: string };
 }
 
 type PromptBuilderStep = 'idle' | 'analyzing' | 'asking' | 'generating' | 'done';
@@ -319,7 +320,7 @@ function AgentsInner() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Generation failed');
         setPb((prev) => ({ ...prev, step: 'done', result: data }));
-        setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', text: '__PROMPT_RESULT__' }]);
+        setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', text: '__PROMPT_RESULT__', promptResult: data }]);
         setAgents((prev) => prev.map((a) => a.id === VISUAL_PROMPT_BUILDER_ID ? { ...a, tasksThisWeek: a.tasksThisWeek + 1 } : a));
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Something went wrong.';
@@ -515,29 +516,29 @@ function AgentsInner() {
                 )}
 
                 {messages.map((msg, i) => {
-                  if (msg.text === '__PROMPT_RESULT__' && pb.result) {
+                  if (msg.text === '__PROMPT_RESULT__' && msg.promptResult) {
+                    const result = msg.promptResult;
                     return (
                       <div key={i} className={styles.promptOutputCard}>
                         <div className={styles.promptSuccessHeader}>✅ ComfyUI Prompts Ready</div>
                         <div className={styles.promptBlock}>
                           <div className={`${styles.promptLabel} ${styles.promptLabelPositive}`}>
                             <span>✦ Positive Prompt</span>
-                            <button type="button" className={`${styles.promptCopyBtn} ${pbCopied === 'pos' ? styles.promptCopied : ''}`} onClick={() => pbCopy(pb.result!.positive_prompt, 'pos')}>
+                            <button type="button" className={`${styles.promptCopyBtn} ${pbCopied === 'pos' ? styles.promptCopied : ''}`} onClick={() => pbCopy(result.positive_prompt, 'pos')}>
                               {pbCopied === 'pos' ? '✓ Copied' : '📋 Copy'}
                             </button>
                           </div>
-                          <pre className={styles.promptText}>{pb.result.positive_prompt}</pre>
+                          <pre className={styles.promptText}>{result.positive_prompt}</pre>
                         </div>
                         <div className={styles.promptBlock}>
                           <div className={`${styles.promptLabel} ${styles.promptLabelNegative}`}>
                             <span>✗ Negative Prompt</span>
-                            <button type="button" className={`${styles.promptCopyBtn} ${pbCopied === 'neg' ? styles.promptCopied : ''}`} onClick={() => pbCopy(pb.result!.negative_prompt, 'neg')}>
+                            <button type="button" className={`${styles.promptCopyBtn} ${pbCopied === 'neg' ? styles.promptCopied : ''}`} onClick={() => pbCopy(result.negative_prompt, 'neg')}>
                               {pbCopied === 'neg' ? '✓ Copied' : '📋 Copy'}
                             </button>
                           </div>
-                          <pre className={styles.promptText}>{pb.result.negative_prompt}</pre>
+                          <pre className={styles.promptText}>{result.negative_prompt}</pre>
                         </div>
-
                         {/* ── Action Buttons ── */}
                         <div className={styles.promptActionsDivider} />
                         <div className={styles.promptActionsLabel}>Use this prompt</div>
@@ -545,7 +546,10 @@ function AgentsInner() {
                           <button
                             type="button"
                             className={styles.promptGeminiBtn}
-                            onClick={pbOpenInGemini}
+                            onClick={() => {
+                              navigator.clipboard.writeText(result.positive_prompt).catch(() => {});
+                              window.open('https://gemini.google.com/app', '_blank', 'noopener,noreferrer');
+                            }}
                             title="Copy prompt & open Gemini"
                           >
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -557,8 +561,7 @@ function AgentsInner() {
                             type="button"
                             className={styles.promptSaveBtn}
                             onClick={() => {
-                              if (!pb.result) return;
-                              navigator.clipboard.writeText(pb.result.positive_prompt).catch(() => {});
+                              navigator.clipboard.writeText(result.positive_prompt).catch(() => {});
                               window.open('https://app.comfy.org/', '_blank', 'noopener,noreferrer');
                             }}
                             title="Copy prompt & open ComfyUI"
@@ -569,11 +572,9 @@ function AgentsInner() {
                             Open ComfyUI
                           </button>
                         </div>
-
                         {saveImgError && (
                           <p className={styles.promptSaveError}>⚠️ {saveImgError}</p>
                         )}
-
                         <div className={styles.promptActions}>
                           <button type="button" className={styles.promptResetBtn} onClick={pbReset}>🔄 Start Over</button>
                         </div>

@@ -587,11 +587,12 @@ $radius: 14px;
   padding: 16px; background: $white;
   border: 1px solid rgba(255, 107, 53, 0.2);
   border-radius: 14px; align-self: flex-start; max-width: 95%;
-  position: relative; overflow: hidden;
+  position: relative;
 
   &::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, $orange, $orange2);
+    border-radius: 14px 14px 0 0;
   }
 }
 

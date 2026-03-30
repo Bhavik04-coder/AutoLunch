@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useLinkedInPost } from '@/hooks/useLinkedInPost';
 import styles from './new.post.modal.module.scss';
@@ -195,6 +196,7 @@ export function NewPostModal({ onClose, onPostCreated, initialDate, initialPost 
   initialPost?: { content: string; platforms: string[]; scheduledAt?: string };
 }) {
   const { fetch: customFetch, apiUrl } = useLayout();
+  const router = useRouter();
   const [content, setContent] = useState(initialPost?.content ?? '');
   const [platforms, setPlatforms] = useState<string[]>(initialPost?.platforms ?? []);
   const [scheduleDate, setScheduleDate] = useState(initialDate ?? initialPost?.scheduledAt ?? '');
@@ -209,27 +211,16 @@ export function NewPostModal({ onClose, onPostCreated, initialDate, initialPost 
   } = useLinkedInPost();
   const showLinkedInBtn = platforms.includes('linkedin') && content.trim().length > 0;
 
-  // Image generation
+  // Image generation — redirects to Nabr Visual Prompt Builder
   const [imgPrompt, setImgPrompt] = useState('');
-  const [generatedImg, setGeneratedImg] = useState<string | null>(null);
-  const [isGeneratingImg, setIsGeneratingImg] = useState(false);
-  const [imgError, setImgError] = useState('');
+
+  const handleGenerateImage = () => {
+    if (!imgPrompt.trim()) return;
+    router.push(`/agents?nabr=${encodeURIComponent(imgPrompt.trim())}`);
+  };
 
   const toggle = (id: string) =>
     setPlatforms((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-
-  const handleGenerateImage = async () => {
-    if (!imgPrompt.trim()) return;
-    setIsGeneratingImg(true); setImgError(''); setGeneratedImg(null);
-    try {
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(imgPrompt.trim())}?width=1024&height=576&seed=${Math.floor(Math.random() * 99999)}&nologo=true`;
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image(); img.onload = () => resolve(); img.onerror = () => reject(); img.src = url;
-      });
-      setGeneratedImg(url);
-    } catch { setImgError('Image generation failed. Try a different prompt.'); }
-    finally { setIsGeneratingImg(false); }
-  };
 
   const handleSubmit = async () => {
     if (!content || platforms.length === 0) return;
@@ -328,34 +319,17 @@ export function NewPostModal({ onClose, onPostCreated, initialDate, initialPost 
             <div className={styles.section}>
               <label className={styles.label}>
                 AI Image Generation
-                <span className={styles.labelBadge}>Powered by Pollinations</span>
+                <span className={styles.labelBadge}>Powered by Nabr</span>
               </label>
               <div className={styles.imgGenRow}>
                 <input type="text" className={styles.imgPromptInput} placeholder="Describe the image you want..."
                   value={imgPrompt} onChange={(e) => setImgPrompt(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerateImage()} />
-                <button type="button" className={styles.imgGenBtn} onClick={handleGenerateImage} disabled={isGeneratingImg || !imgPrompt.trim()}>
-                  {isGeneratingImg ? <span className={styles.imgSpinner} /> : '✦ Generate'}
+                <button type="button" className={styles.imgGenBtn} onClick={handleGenerateImage} disabled={!imgPrompt.trim()}>
+                  ✦ Generate
                 </button>
               </div>
-              {imgError && <p className={styles.imgError}>{imgError}</p>}
-              {isGeneratingImg && (
-                <div className={styles.imgPlaceholder}>
-                  <span className={styles.imgLoadingDots}><span /><span /><span /></span>
-                  <p>Generating your image...</p>
-                </div>
-              )}
-              {generatedImg && !isGeneratingImg && (
-                <div className={styles.imgPreviewWrap}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={generatedImg} alt="Generated" className={styles.imgPreview} />
-                  <div className={styles.imgActions}>
-                    <button type="button" className={styles.imgActionBtn} onClick={() => setGeneratedImg(null)}>🗑 Remove</button>
-                    <button type="button" className={styles.imgActionBtn} onClick={handleGenerateImage}>🔄 Regenerate</button>
-                    <a href={generatedImg} download="generated.jpg" target="_blank" rel="noreferrer" className={styles.imgActionBtn}>⬇ Download</a>
-                  </div>
-                </div>
-              )}
+              <p className={styles.imgGenHint}>Opens Nabr Visual Prompt Builder to craft a detailed AI image prompt.</p>
             </div>
 
             {/* Schedule */}

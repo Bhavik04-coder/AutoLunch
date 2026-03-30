@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import styles from './home.module.scss';
+import HeroGradient from '@/components/ui/HeroGradient';
 
 // ─── Scroll-reveal hook ──────────────────────────────────────────────────────
 function useScrollReveal() {
@@ -19,9 +20,16 @@ function useScrollReveal() {
           }
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -60px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
     );
-    document.querySelectorAll(`.${styles.reveal}`).forEach((el) => observer.observe(el));
+    const selectors = [
+      `.${styles.reveal}`,
+      `.${styles.revealLeft}`,
+      `.${styles.revealRight}`,
+      `.${styles.revealScale}`,
+      `.${styles.revealFade}`,
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 }
@@ -92,7 +100,7 @@ function ValueProp() {
 
         <div className={styles.valuePropGrid}>
           {/* Card 1 */}
-          <div className={`${styles.valuePropCard} ${styles.reveal}`}>
+          <div className={`${styles.valuePropCard} ${styles.revealLeft}`}>
             <div className={styles.vpMockUI}>
               <div className={styles.vpMockHeader}>
                 <div className={styles.vpMockDots}>
@@ -146,7 +154,7 @@ function ValueProp() {
           </div>
 
           {/* Card 3 */}
-          <div className={`${styles.valuePropCard} ${styles.reveal}`} style={{ transitionDelay: '200ms' }}>
+          <div className={`${styles.valuePropCard} ${styles.revealRight}`} style={{ transitionDelay: '200ms' }}>
             <div className={styles.vpMockUI}>
               <div className={styles.vpMockHeader}>
                 <div className={styles.vpMockDots}><span /><span /><span /></div>
@@ -274,7 +282,7 @@ function FeaturesSection() {
       <div className={styles.featuresAltInner}>
 
         {/* Feature 1 — AI Captions */}
-        <div className={`${styles.featureRow} ${styles.reveal}`}>
+        <div className={`${styles.featureRow} ${styles.revealLeft}`}>
           <div className={styles.featureMockWrap}>
             <div className={styles.featureMock}>
               <div className={styles.fmHeader}>
@@ -316,7 +324,7 @@ function FeaturesSection() {
         </div>
 
         {/* Feature 2 — Smart Scheduling (reversed) */}
-        <div className={`${styles.featureRow} ${styles.featureRowReverse} ${styles.reveal}`}>
+        <div className={`${styles.featureRow} ${styles.featureRowReverse} ${styles.revealRight}`}>
           <div className={styles.featureMockWrap}>
             <div className={`${styles.featureMock} ${styles.featureMockAccent}`}>
               <div className={styles.fmHeader}>
@@ -362,7 +370,7 @@ function FeaturesSection() {
         </div>
 
         {/* Feature 3 — Analytics */}
-        <div className={`${styles.featureRow} ${styles.reveal}`}>
+        <div className={`${styles.featureRow} ${styles.revealLeft}`}>
           <div className={styles.featureMockWrap}>
             <div className={styles.featureMock}>
               <div className={styles.fmHeader}>
@@ -456,7 +464,7 @@ function DashboardShowcase() {
 
         <div className={styles.dashLayout}>
           {/* Stats column */}
-          <div className={`${styles.dashStats} ${styles.reveal}`}>
+          <div className={`${styles.dashStats} ${styles.revealLeft}`}>
             {stats.map((s, i) => (
               <div key={s.label} className={styles.dashStat} style={{ transitionDelay: `${i * 80}ms` }}>
                 <span className={styles.dashStatVal} style={{ color: s.color }}>{s.value}</span>
@@ -466,7 +474,7 @@ function DashboardShowcase() {
           </div>
 
           {/* Feature grid */}
-          <div className={`${styles.dashFeatureGrid} ${styles.reveal}`}>
+          <div className={`${styles.dashFeatureGrid} ${styles.revealRight}`}>
             {features.map((f, i) => (
               <div key={f.title} className={styles.dashFeatureCard} style={{ transitionDelay: `${i * 60}ms` }}>
                 <div className={styles.dashFeatureIcon}>{f.icon}</div>
@@ -492,13 +500,16 @@ function BeforeAfter() {
           <p className={styles.sectionSubtitle}>Clearer workflows, fewer context switches, and every platform always on the same page — without juggling tools.</p>
         </div>
 
-        <div className={`${styles.baLayout} ${styles.reveal}`}>
+        <div className={`${styles.baLayout} ${styles.revealScale}`}>
           {/* Before */}
-          <div className={styles.baBefore}>
+          <div className={styles.baSide}>
             <p className={styles.baLabel}>Before</p>
-            <div className={styles.baScatteredTools}>
+            <div className={styles.baCardList}>
               {['Buffer', 'Hootsuite', 'Canva', 'Google Sheets', 'Slack DMs', 'Notion Docs'].map((t) => (
-                <div key={t} className={styles.baScatteredTool}>{t}</div>
+                <div key={t} className={styles.baCardBefore}>
+                  <span className={styles.baAfterDot} />
+                  {t}
+                </div>
               ))}
             </div>
           </div>
@@ -509,23 +520,24 @@ function BeforeAfter() {
               <Image src="/large.png" alt="AutoLaunch" width={40} height={40} className={styles.baHubLogo} />
               <span>AutoLaunch</span>
             </div>
-            <p className={styles.baHubLabel}>Your social hub</p>
+            <p className={styles.baHubLabel}>Your hub</p>
           </div>
 
           {/* After */}
-          <div className={styles.baAfter}>
-            <p className={styles.baLabel}>After</p>
-            <div className={styles.baAfterList}>
+          <div className={styles.baSide}>
+            <p className={styles.baLabelAfter}>After</p>
+            <div className={styles.baCardList}>
               {[
-                { dot: '#6366f1', text: 'AI caption generation' },
-                { dot: '#8b5cf6', text: 'One unified calendar' },
-                { dot: '#10b981', text: 'Cross-platform analytics' },
-                { dot: '#ec4899', text: 'Media library' },
-                { dot: '#3b82f6', text: '8 platform integrations' },
-              ].map((item) => (
-                <div key={item.text} className={styles.baAfterItem}>
-                  <div className={styles.baAfterDot} style={{ background: item.dot }} />
-                  <span>{item.text}</span>
+                'AI caption generation',
+                'One unified calendar',
+                'Cross-platform analytics',
+                'Media library',
+                '8 platform integrations',
+                'Smart notifications',
+              ].map((text) => (
+                <div key={text} className={styles.baCardAfter}>
+                  <span className={styles.baAfterDot} />
+                  {text}
                 </div>
               ))}
             </div>
@@ -568,7 +580,7 @@ function HowItWorks() {
           <p className={styles.sectionSubtitle}>From setup to your first published post in minutes, not hours.</p>
         </div>
 
-        <div className={`${styles.howItWorksLayout} ${styles.reveal}`}>
+        <div className={`${styles.howItWorksLayout} ${styles.revealFade}`}>
           {/* Visual side */}
           <div className={styles.hiwVisual}>
             <div className={styles.hiwMockCard}>
@@ -737,14 +749,7 @@ export default function HomePage() {
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className={styles.hero}>
-        <div className={styles.heroBackground}>
-          <div className={styles.decorativeCircles}>
-            <div className={styles.circle1} />
-            <div className={styles.circle2} />
-          </div>
-          <div className={styles.heroBlobLeft} />
-          <div className={styles.heroBlobRight} />
-        </div>
+        <HeroGradient />
 
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
